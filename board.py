@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 
 class Board:
@@ -125,7 +126,7 @@ class Board:
 
         # fig = plt.figure(frameon=False)
         colors = {"A": "red", "B": "blue", "C": "yellow", "D": "green", "_": "lightgrey"}
-        ax = plt.subplot(111, xlim=(0, board.size[0]), ylim=(0, board.size[1]))
+        ax = plt.subplot(xlim=(0, board.size[0]), ylim=(0, board.size[1]))
         for i in range(board.size[0] + 1):
             for j in range(board.size[1] + 1):
                 polygon = plt.Polygon([[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1], [i, j]])
@@ -134,10 +135,13 @@ class Board:
                         polygon.set_facecolor(colors[player])
                         ax.add_patch(polygon)
 
-        for axis in (ax.xaxis, ax.yaxis):
-            axis.set_major_formatter(plt.NullFormatter())
-            axis.set_major_locator(plt.NullLocator())
+        # for axis in (ax.xaxis, ax.yaxis):
+        #     axis.set_major_formatter(plt.NullFormatter())
+        #     axis.set_major_locator(plt.NullLocator())
         # plt.savefig(os.path.join("images", "random" + str(num) + ".png"))
+        plt.xticks(np.arange(0, 14, 1))
+        plt.yticks(np.arange(0, 14, 1))
+        plt.grid()
         plt.draw()
         plt.pause(0.00001)
         # plt.show()
