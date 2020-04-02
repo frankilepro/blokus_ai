@@ -1,4 +1,4 @@
-from shape import Shape
+from blokus.envs.shapes.shape import Shape
 
 
 class I1(Shape):

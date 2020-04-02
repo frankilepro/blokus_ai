@@ -1,4 +1,5 @@
 import copy
+import numpy as np
 
 
 def eval_move(piece, player, game, weights):

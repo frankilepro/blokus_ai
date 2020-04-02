@@ -1,4 +1,4 @@
-from game import Game
+from blokus.envs.game.game import Game
 
 
 class BlokusGame(Game):
