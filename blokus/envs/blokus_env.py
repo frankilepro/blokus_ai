@@ -22,10 +22,12 @@ class BlokusEnv(gym.Env):
 
         first = Player("A", "Computer_A", Random_Player)
         second = Player("B", "Computer_B", Random_Player)
-        third = Player("C", "Computer_C", Random_Player)
-        fourth = Player("D", "Computer_D", Random_Player)
-        standard_size = Board(14, 14, "_")
-        ordering = [first, second, third, fourth]
+        # third = Player("C", "Computer_C", Random_Player)
+        # fourth = Player("D", "Computer_D", Random_Player)
+        # standard_size = Board(21, 21, "_")
+        standard_size = Board(14, 14, "_")  # TODO duo version
+        # ordering = [first, second, third, fourth]
+        ordering = [first, second]
         random.shuffle(ordering)
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
 

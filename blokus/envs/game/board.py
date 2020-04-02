@@ -89,11 +89,11 @@ class Board:
 
     def print_board(self, num=None, fancy=True):
         if fancy:
-            self.fancyBoard(self, num)
+            self.fancyBoard(num)
         else:
-            self.printBoard(self.state)
+            self.printBoard()
 
-    def printBoard(self, board):
+    def printBoard(self):
         n = 2
         """
         Prints the board where the representation of a board is
@@ -101,48 +101,36 @@ class Board:
         the board is invalid: the length of the rows are not
         the same.
         """
-        assert(len(set([len(board[i]) for i in range(len(board))])) == 1)
+        assert(len(set([len(self.state[i]) for i in range(len(self.state))])) == 1)
         print(' ' * n, end=' ')
-        for i in range(len(board[1])):
+        for i in range(len(self.state[1])):
             print(str(i) + ' ' * (n-len(str(i))), end=' ')
         print()
-        for i, row in enumerate(board):
+        for i, row in enumerate(self.state):
             print(str(i) + ' ' * (n-len(str(i))), (' ' * n).join(row))
 
-    def fancyBoard(self, board, num):
+    def fancyBoard(self, num):
         plt.clf()
-        # os.makedirs("images", exist_ok=True)
-        # Apoints = []
-        # Bpoints = []
-        # Cpoints = []
-        # Dpoints = []
         points = {}
-        for y in enumerate(board.state):
+        for y in enumerate(self.state):
             for x in enumerate(y[1]):
                 id = x[1]
                 if id not in points:
                     points[id] = []
-                points[id].append((x[0], (board.size[0] - 1) - y[0]))
+                points[id].append((x[0], (self.size[0] - 1) - y[0]))
 
-        # fig = plt.figure(frameon=False)
         colors = {"A": "red", "B": "blue", "C": "yellow", "D": "green", "_": "lightgrey"}
-        ax = plt.subplot(xlim=(0, board.size[0]), ylim=(0, board.size[1]))
-        for i in range(board.size[0] + 1):
-            for j in range(board.size[1] + 1):
+        ax = plt.subplot(xlim=(0, self.size[0]), ylim=(0, self.size[1]))
+        for i in range(self.size[0] + 1):
+            for j in range(self.size[1] + 1):
                 polygon = plt.Polygon([[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1], [i, j]])
                 for player, pts in points.items():
                     if (i, j) in pts:
                         polygon.set_facecolor(colors[player])
                         ax.add_patch(polygon)
 
-        # for axis in (ax.xaxis, ax.yaxis):
-        #     axis.set_major_formatter(plt.NullFormatter())
-        #     axis.set_major_locator(plt.NullLocator())
-        # plt.savefig(os.path.join("images", "random" + str(num) + ".png"))
-        plt.xticks(np.arange(0, 14, 1))
-        plt.yticks(np.arange(0, 14, 1))
+        plt.xticks(np.arange(0, self.size[0], 1))
+        plt.yticks(np.arange(0, self.size[1], 1))
         plt.grid()
         plt.draw()
         plt.pause(0.00001)
-        # plt.show()
-        # return ax
