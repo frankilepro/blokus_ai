@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 
+
 class Board:
     """
     Creates a board that has n rows and
@@ -107,51 +108,37 @@ class Board:
         for i, row in enumerate(board):
             print(str(i) + ' ' * (n-len(str(i))), (' ' * n).join(row))
 
-
     def fancyBoard(self, board, num):
         plt.clf()
         # os.makedirs("images", exist_ok=True)
-        Apoints = []
-        Bpoints = []
-        Cpoints = []
-        Dpoints = []
+        # Apoints = []
+        # Bpoints = []
+        # Cpoints = []
+        # Dpoints = []
+        points = {}
         for y in enumerate(board.state):
             for x in enumerate(y[1]):
-                if x[1] == "A":
-                    Apoints.append((x[0], (board.size[0] - 1) - y[0]))
-                if x[1] == "B":
-                    Bpoints.append((x[0], (board.size[0] - 1) - y[0]))
-                if x[1] == "C":
-                    Cpoints.append((x[0], (board.size[0] - 1) - y[0]))
-                if x[1] == "D":
-                    Dpoints.append((x[0], (board.size[0] - 1) - y[0]))
+                id = x[1]
+                if id not in points:
+                    points[id] = []
+                points[id].append((x[0], (board.size[0] - 1) - y[0]))
+
         # fig = plt.figure(frameon=False)
+        colors = {"A": "red", "B": "blue", "C": "yellow", "D": "green", "_": "lightgrey"}
         ax = plt.subplot(111, xlim=(0, board.size[0]), ylim=(0, board.size[1]))
         for i in range(board.size[0] + 1):
             for j in range(board.size[1] + 1):
                 polygon = plt.Polygon([[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1], [i, j]])
-                if (i, j) in Apoints:
-                    polygon.set_facecolor('red')
-                    ax.add_patch(polygon)
-                elif (i, j) in Bpoints:
-                    polygon.set_facecolor('blue')
-                    ax.add_patch(polygon)
-                elif (i, j) in Cpoints:
-                    polygon.set_facecolor('yellow')
-                    ax.add_patch(polygon)
-                elif (i, j) in Dpoints:
-                    polygon.set_facecolor('green')
-                    ax.add_patch(polygon)
-                else:
-                    polygon.set_facecolor('lightgrey')
-                    ax.add_patch(polygon)
+                for player, pts in points.items():
+                    if (i, j) in pts:
+                        polygon.set_facecolor(colors[player])
+                        ax.add_patch(polygon)
+
         for axis in (ax.xaxis, ax.yaxis):
             axis.set_major_formatter(plt.NullFormatter())
             axis.set_major_locator(plt.NullLocator())
         # plt.savefig(os.path.join("images", "random" + str(num) + ".png"))
         plt.draw()
         plt.pause(0.00001)
-        # plt.clf()
         # plt.show()
         # return ax
-
