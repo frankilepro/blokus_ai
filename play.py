@@ -8,9 +8,11 @@ observation = env.reset()
 done = False
 while not done:
     env.render()
-    action = random.choice(env.ai_possible_moves())  # your agent here (this takes random actions)
+    actions = env.ai_possible_moves()  # your agent here (this takes random actions)
+    if len(actions) == 0:
+        break
     # action = env.action_space.sample()  # your agent here (this takes random actions)
-    observation, reward, done, info = env.step(action)
+    observation, reward, done, info = env.step(random.choice(actions))
     # observation, reward, done, info = env.step(None)
 
     if done:
