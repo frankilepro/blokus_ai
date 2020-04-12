@@ -1,6 +1,7 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
 import random
 import gym
+import os
 from gym import error, spaces, utils
 from gym.utils import seeding
 import blokus.envs.shapes.shapes as shapes
@@ -9,9 +10,11 @@ from blokus.envs.players.random_player import Random_Player
 from blokus.envs.game.board import Board
 from blokus.envs.game.blokus_game import BlokusGame
 import matplotlib.pyplot as plt
+import json
 
 
 class BlokusEnv(gym.Env):
+    STATES_FILE = "states.json"
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
@@ -20,21 +23,31 @@ class BlokusEnv(gym.Env):
                       shapes.T5(), shapes.V5(), shapes.N(), shapes.Z5(), shapes.T4(),
                       shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
 
-        first = Player("A", "Computer_A", Random_Player)
+        self.ai = Player("A", "ai_strategy_name", Random_Player)
         second = Player("B", "Computer_B", Random_Player)
         # third = Player("C", "Computer_C", Random_Player)
         # fourth = Player("D", "Computer_D", Random_Player)
         # standard_size = Board(21, 21, "_")
         standard_size = Board(14, 14, "_")  # TODO duo version
-        # ordering = [first, second, third, fourth]
-        ordering = [first, second]
+        # ordering = [self.ai, second, third, fourth]
+        ordering = [self.ai, second]
         random.shuffle(ordering)
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
 
+        # self.observation_space = spaces.Box(0, 4, (21, 21))
+        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
+        self.set_all_possible_moves()
+        self.action_space = spaces.Discrete(len(self.all_possible_moves))
+
     def step(self, action):
+        self.ai.strategy = lambda player, game: action
         self.blokus_game.play()
+
+        while self.blokus_game.next_player() != self.ai:
+            self.blokus_game.play()
+
         done = self.blokus_game.winner() != "None"
-        return {}, 0, done, {}
+        return self.blokus_game.board, 0, done, {}
 
     def reset(self):
         return {}  # TODO
@@ -44,3 +57,24 @@ class BlokusEnv(gym.Env):
 
     def close(self):
         plt.close('all')
+
+    def ai_possible_moves(self):
+        # all_ai_possible_moves = []
+        # shape_options = [p for p in self.ai.pieces]
+        # for piece in shape_options:
+        #     possibles = self.ai.possible_moves([piece], self.blokus_game)
+        #     all_ai_possible_moves.extend(possibles)
+        # return all_ai_possible_moves
+        return self.ai.possible_moves([p for p in self.ai.pieces], self.blokus_game)
+
+    def set_all_possible_moves(self):
+        if os.path.exists(self.STATES_FILE):
+            with open(self.STATES_FILE) as json_file:
+                self.all_possible_moves = json.load(json_file)
+        else:
+            all_possible_moves = self.ai.possible_moves(
+                [p for p in self.ai.pieces], self.blokus_game, no_restriction=True)
+            data = {str(move): idx for idx, move in enumerate(all_possible_moves)}
+            with open(self.STATES_FILE, "w") as json_file:
+                json.dump(data, json_file, indent=4)
+            self.blokus_game.start()

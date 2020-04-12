@@ -7,6 +7,8 @@ def Random_Player(player, game):
     in the form of a single piece with a proper flip, orientation, corners,
     and points. If no placement can be made function should return None.
     """
+    # return random.choice(player.possible_moves([p for p in player.pieces], game))
+
     shape_options = [p for p in player.pieces]
     while len(shape_options) > 0:
         piece = random.choice(shape_options)
