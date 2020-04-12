@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import json
 
 
-class BlokusEnv(gym.Env):
+class BlokusHardEnv(gym.Env):
     STATES_FILE = "states.json"
     metadata = {'render.modes': ['human']}
 
@@ -25,12 +25,15 @@ class BlokusEnv(gym.Env):
 
         self.ai = Player("A", "ai_strategy_name", Random_Player)
         second = Player("B", "Computer_B", Random_Player)
-        standard_size = Board(14, 14, "_")
+        third = Player("C", "Computer_C", Random_Player)
+        fourth = Player("D", "Computer_D", Random_Player)
+        standard_size = Board(21, 21, "_")
+        ordering = [self.ai, second, third, fourth]
         ordering = [self.ai, second]
         random.shuffle(ordering)
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
 
-        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
+        self.observation_space = spaces.Box(0, 4, (21, 21), dtype=int)   # Nothing, us or them on every tile
         self.set_all_possible_moves()
         self.action_space = spaces.Discrete(len(self.all_possible_moves))
 

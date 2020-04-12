@@ -63,6 +63,7 @@ class Shape:
         """
         assert(self.points != "None")
         assert(degrees in [0, 90, 180, 270])
+        self.degrees = degrees
 
         def rotate_this(p):
             return(rotatep(p, self.refpt, degrees))
@@ -76,6 +77,7 @@ class Shape:
         """
         assert(orientation == "h" or orientation == "None")
         assert(self.points != "None")
+        self.orientation = orientation
 
         def flip_h(p):
             x1 = self.refpt[0]
@@ -95,3 +97,8 @@ class Shape:
             self.corners = list(map(no_flip, self.corners))
         else:
             raise Exception("Invalid orientation.")
+
+    def __str__(self):
+        return "\n".join([f"Id: {self.ID}", f"Size: {self.size}",
+                          f"Orientation: {self.orientation}", f"Degrees: {self.degrees}",
+                          f"Points: {sorted(self.points)}"])

@@ -79,21 +79,28 @@ class Player:
             if (board.in_bounds(c) and (not board.overlap([c]))):
                 (self.corners).add(c)
 
-    def possible_moves(self, pieces, game):
+    def possible_moves(self, pieces, game, no_restriction=False):
         """
         Returns a unique list of placements, i.e. Shape objects
         with a particular flip, orientation, corners, and points.
         It uses a list of pieces (Shape objects) and the game, which includes
         its rules and valid moves, in order to find the placements.
         """
-        def check_corners(game):
+        def check_corners(game, no_restriction):
             """
             Updates the corners of the player, in case the
             corners have been covered by another player's pieces.
             """
-            self.corners = set([(i, j) for (i, j) in self.corners if game.board.state[j][i] == game.board.null])
+            if no_restriction:
+                self.corners = set()
+                for i in range(0, 14 + 1):
+                    for j in range(0, 14 + 1):
+                        self.corners.add((i, j))
+            else:
+                self.corners = set([(i, j) for (i, j) in self.corners if game.board.state[j][i] == game.board.null])
+
         # Check the corners before proceeding.
-        check_corners(game)
+        check_corners(game, no_restriction)
         # This list of placements will be updated with valid ones.
         placements = []
         visited = []
