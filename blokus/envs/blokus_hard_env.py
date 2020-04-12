@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import json
 
 
-class BlokusEnvHard(gym.Env):
+class BlokusHardEnv(gym.Env):
     STATES_FILE = "states.json"
     metadata = {'render.modes': ['human']}
 
