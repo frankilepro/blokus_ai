@@ -51,15 +51,6 @@ class Game:
         starting with the first player in the list at
         instantiation.
         """
-        # if self.rounds == 0:
-        #     # When the game has not begun yet, the game must
-        #     # give the players their pieces and a corner to start.
-        #     max_x = ((self.board).size[1] - 1)
-        #     max_y = ((self.board).size[0] - 1)
-        #     starts = [(0, 0), (max_y, max_x), (0, max_x), (max_y, 0)]
-        #     for i in range(len(self.players)):
-        #         (self.players[i]).add_pieces(self.all_pieces)
-        #         (self.players[i]).start_corner(starts[i])
 
         # if there is no winner, print out the current player's name and
         # let current player perform a move
