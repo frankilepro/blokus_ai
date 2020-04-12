@@ -1,4 +1,5 @@
 from collections import deque
+import os
 
 import torch
 import random
@@ -48,10 +49,12 @@ class Agent:
                  batch_size,
                  learning_rate,
                  num_episodes,
+                 model_filename,
                  eps=1,
                  min_eps=0.01,
-                 eps_decay=0.999,
-                 gamma=0.99):
+                 eps_decay=0.99,
+                 gamma=0.99,
+                 is_double=False):
         self.env = env
         self.num_episodes = num_episodes
         self.gamma = gamma
@@ -61,7 +64,15 @@ class Agent:
         self.min_eps = min_eps
         self.eps_decay = eps_decay
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
-        self.model = DQN(env.observation_space.n, env.action_space.n).to(self.device)
+        self.model_path = os.path.join("models", model_filename + ".pt")
+        # self.model = DQN(env.observation_space.n, env.action_space.n).to(self.device)
+        self.model = torch.load(self.model_path, map_location=self.device)
+        self.is_double = is_double
+        self.loss = []
+        if self.is_double:
+            self.model_target = DQN(env.observation_space.n, env.action_space.n).to(self.device)
+            self.model_target.load_state_dict(self.model.state_dict())
+            self.model_target.eval()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
 
     def eps_greedy_action(self, state):
@@ -78,16 +89,23 @@ class Agent:
     def update(self, state, target, action):
         prediction = self.model(state)[action]
         loss = F.smooth_l1_loss(prediction, target)
+        self.loss.append(loss)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def get_target_double(self, next_state):
+        return self.model_target(next_state).max()
 
     def get_target(self, reward, done, next_state):
         # y = r if done
         target = torch.tensor(reward).to(self.device)
         if not done:
             # y = r + gamma * max Q(s',a') if not done
-            next_state_max_Q = self.model(next_state).max()
+            if self.is_double:
+                next_state_max_Q = self.get_target_double(next_state)
+            else:
+                next_state_max_Q = self.model(next_state).max()
             target = (next_state_max_Q * self.gamma) + reward
         return target
 
@@ -104,6 +122,7 @@ class Agent:
 
     def train(self):
         rewards_lst = []
+        best_rate = 0
         for i in range(self.num_episodes):
             rewards = 0
             done = False
@@ -120,24 +139,46 @@ class Agent:
 
                 target = self.get_target(reward, done, next_state)
                 self.update(state, target, action)
-                self.eps = min(self.min_eps, self.eps * self.eps_decay)
+                self.eps = max(self.min_eps, self.eps * self.eps_decay)
 
                 rewards_lst.append(rewards)
                 state = next_state
 
-            if not i % 10 and i != 0:
-                print('Episode {} Reward: {} Reward Rate {}'.format(i, rewards, str(sum(rewards_lst) / i)))
+                if not i % 20 and self.is_double:
+                    self.model_target.load_state_dict(self.model.state_dict())
 
+            if not i % 10 and i != 0:
+                print('Episode {} Loss: {} Reward Rate {}'.format(i, self.loss[-1], str(sum(rewards_lst) / i)))
+                if (sum(rewards_lst) / i) > best_rate:
+                    best_rate = (sum(rewards_lst) / i)
+                    torch.save(self.model, self.model_path)
+        torch.save(self.model, self.model_path)
         self.env.close()
+
+    def test(self):
+        self.model = torch.load(self.model_path, map_location=self.device)
+        done = False
+        state = self.ohe(self.env.reset())
+        rewards = 0
+        while not done:
+            action = int(self.model(state).argmax().detach().cpu())
+            self.env.render()
+            next_state, reward, done, info = self.env.step(action)
+            rewards += reward
+            state = self.ohe(next_state)
+        self.env.close()
+
 
 
 if __name__ == "__main__":
     env = gym.make("FrozenLake-v0")
-    memory_size = 1000
+    memory_size = 500
     num_episodes = 10000
     batch_size = 32
-    gamma = 0.99
+    gamma = 0.999
     learning_rate = 0.001
+    model_filename = "frozen_lake_DQN"
 
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes)
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename)
     agent.train()
+    # agent.test()
