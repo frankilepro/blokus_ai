@@ -9,7 +9,7 @@ while not done:
     env.render()
     actions = env.ai_possible_moves()
     if len(actions) == 0:
-        break
+        actions = [None]
 
     observation, reward, done, info = env.step(random.choice(actions))
 
