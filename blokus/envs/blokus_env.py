@@ -37,12 +37,19 @@ class BlokusEnv(gym.Env):
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
 
     def step(self, action):
+
         self.ai.strategy = lambda player, game: action
         self.blokus_game.play()
 
-        while self.blokus_game.next_player() != self.ai:
+        done, reward = self.get_done_reward()
+        while not done and self.blokus_game.next_player() != self.ai:
             self.blokus_game.play()
+            done, reward = self.get_done_reward()
 
+        done, reward = self.get_done_reward()
+        return self.blokus_game.board.tensor, reward, done, {}
+
+    def get_done_reward(self):
         winner = self.blokus_game.winner()
         done = winner != "None"
         if done:
@@ -52,11 +59,11 @@ class BlokusEnv(gym.Env):
                 reward = -1
         else:
             reward = 0
-        return self.blokus_game.board.numpy(), reward, done, {}
+        return done, reward
 
     def reset(self):
         self.init_game()
-        return self.blokus_game.board.numpy()
+        return self.blokus_game.board.tensor
 
     def render(self, mode='human'):
         self.blokus_game.board.print_board(num=self.blokus_game.rounds)

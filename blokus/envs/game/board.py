@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import torch
 
 
 class Board:
@@ -15,13 +16,10 @@ class Board:
         plt.ion()
         self.size = (n, m)
         self.player_ids = {}
-        self.np_board = np.zeros(self.size, dtype=int)
+        self.tensor = torch.zeros(self.size, dtype=torch.int32)
         self.null = null
         self.empty = [[self.null] * m for i in range(n)]
         self.state = self.empty
-
-    def numpy(self):
-        return self.np_board
 
     def update(self, player, move):
         """
@@ -36,7 +34,7 @@ class Board:
             for col in range(len(self.state[1])):
                 if (col, row) in move:
                     self.state[row][col] = player.label
-                    self.np_board[row][col] = id
+                    self.tensor[row][col] = id
 
     def in_bounds(self, point):
         """
