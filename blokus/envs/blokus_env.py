@@ -18,21 +18,23 @@ class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
+        self.init_game()
+        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
+        self.set_all_possible_moves()
+        self.action_space = spaces.Discrete(len(self.all_possible_moves))
+
+    def init_game(self):
         All_Shapes = [shapes.I1(), shapes.I2(), shapes.I3(), shapes.I4(), shapes.I5(),
                       shapes.V3(), shapes.L4(), shapes.Z4(), shapes.O4(), shapes.L5(),
                       shapes.T5(), shapes.V5(), shapes.N(), shapes.Z5(), shapes.T4(),
                       shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
 
-        self.ai = Player("A", "ai_strategy_name", Random_Player)
+        self.ai = Player("A", "ai", Random_Player)
         second = Player("B", "Computer_B", Random_Player)
         standard_size = Board(14, 14, "_")
         ordering = [self.ai, second]
         random.shuffle(ordering)
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
-
-        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
-        self.set_all_possible_moves()
-        self.action_space = spaces.Discrete(len(self.all_possible_moves))
 
     def step(self, action):
         self.ai.strategy = lambda player, game: action
@@ -41,11 +43,20 @@ class BlokusEnv(gym.Env):
         while self.blokus_game.next_player() != self.ai:
             self.blokus_game.play()
 
-        done = self.blokus_game.winner() != "None"
-        return self.blokus_game.board, 0, done, {}
+        winner = self.blokus_game.winner()
+        done = winner != "None"
+        if done:
+            if winner == "ai":
+                reward = 1
+            else:
+                reward = -1
+        else:
+            reward = 0
+        return self.blokus_game.board.numpy(), reward, done, {}
 
     def reset(self):
-        return {}  # TODO
+        self.init_game()
+        return self.blokus_game.board.numpy()
 
     def render(self, mode='human'):
         self.blokus_game.board.print_board(num=self.blokus_game.rounds)
