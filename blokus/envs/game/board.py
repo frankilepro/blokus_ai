@@ -14,19 +14,29 @@ class Board:
     def __init__(self, n, m, null):
         plt.ion()
         self.size = (n, m)
+        self.player_ids = {}
+        self.np_board = np.zeros(self.size, dtype=int)
         self.null = null
         self.empty = [[self.null] * m for i in range(n)]
         self.state = self.empty
+
+    def numpy(self):
+        return self.np_board
 
     def update(self, player, move):
         """
         Takes in a Player object and a move as a
         list of integer tuples that represent the piece.
         """
+        if player.label not in self.player_ids:
+            self.player_ids[player.label] = len(self.player_ids) + 1  # since 0 represents empty
+
+        id = self.player_ids[player.label]
         for row in range(len(self.state)):
             for col in range(len(self.state[1])):
                 if (col, row) in move:
                     self.state[row][col] = player.label
+                    self.np_board[row][col] = id
 
     def in_bounds(self, point):
         """
