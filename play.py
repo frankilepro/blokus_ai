@@ -11,9 +11,7 @@ while True:
         actions = [None]
 
     observation, reward, done, info = env.step(random.choice(actions))
-    print(observation)
 
-    print(done)
     if done:
         observation = env.reset()
 env.close()

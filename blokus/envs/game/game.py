@@ -56,7 +56,7 @@ class Game:
         # let current player perform a move
         if self.winner() == "None":
             current = self.players[0]
-            print("Current player: " + current.name)
+            # print("Current player: " + current.name)
             proposal = current.do_move(self)
             if proposal == None:
                 # move on to next player, increment rounds
