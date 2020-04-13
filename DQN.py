@@ -9,6 +9,8 @@ import gym
 import torch.nn.functional as F
 import torch.optim as optim
 
+from blokus.envs.blokus_env import BlokusEnv
+from segment_tree import SegmentTree
 
 class DQN(nn.Module):
     def __init__(self, in_dim, out_dim):
@@ -42,6 +44,28 @@ class ReplayMemory:
         return random.sample(self.memory, self.batch_size)
 
 
+# TODO not finished
+class PrioritizedExperienceReplay(ReplayMemory):
+    def __init__(self, max_size, batch_size, tree_capacity, a):
+        super(PrioritizedExperienceReplay, self).__init__(max_size, batch_size)
+        self.tree = SegmentTree(tree_capacity)
+        self.a = a
+
+    def add_to_memory(self, state, action, next_state, reward, done):
+        super().add_to_memory(state, action, next_state, reward, done)
+
+    def get_priority(self, error):
+        eps = 0.001
+        return (np.abs(error) + eps) ** self.a
+
+    def sample_batch(self):
+        segment = self.tree.query(0, len(self) - 1, 'sum') / self.batch_size
+        for i in range(self.batch_size):
+            a = segment * i
+            b = segment * (i + 1)
+            s = random.uniform(a, b)
+
+
 class Agent:
     def __init__(self,
                  env,
@@ -65,12 +89,15 @@ class Agent:
         self.eps_decay = eps_decay
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
-        self.model = DQN(env.observation_space.n, env.action_space.n).to(self.device)
+        # Blokus
+        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        # self.obs_size = env.observation_space.n
+        self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
         # self.model = torch.load(self.model_path, map_location=self.device)
         self.is_double = is_double
         self.loss = []
         if self.is_double:
-            self.model_target = DQN(env.observation_space.n, env.action_space.n).to(self.device)
+            self.model_target = DQN(self.obs_size, env.action_space.n).to(self.device)
             self.model_target.load_state_dict(self.model.state_dict())
             self.model_target.eval()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -95,6 +122,8 @@ class Agent:
         self.optimizer.step()
 
     def get_target_double(self, next_state):
+        # action = self.model(next_state).argmax()
+        # return self.model_target(next_state)[action]
         return self.model_target(next_state).max()
 
     def get_target(self, reward, done, next_state):
@@ -146,7 +175,7 @@ class Agent:
 
             if len(self.memory) > self.batch_size:
                 self.replay()
-                
+
             if not i % 10 and i != 0:
                 print('Episode {} Loss: {} Reward Rate {}'.format(i, self.loss[-1], str(sum(rewards_lst) / i)))
                 if (sum(rewards_lst) / i) > best_rate:
@@ -163,23 +192,32 @@ class Agent:
         self.eps = self.min_eps
         while not done:
             action = self.eps_greedy_action(state)
-            self.env.render()
+            # self.env.render()
             next_state, reward, done, info = self.env.step(action)
             rewards += reward
             state = self.ohe(next_state)
+        if rewards:
+            print("Victory")
+        else:
+            print("Lost")
         self.env.close()
 
 
 
 if __name__ == "__main__":
     env = gym.make("FrozenLake-v0")
-    memory_size = 10000
+    # env = BlokusEnv()
+    memory_size = 1000
     num_episodes = 10000
     batch_size = 32
     # gamma = 0.999
     learning_rate = 0.001
-    model_filename = "frozen_lake_DQN_t"
+    model_filename = "test2"
 
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False)
-    agent.train()
-    # agent.test()
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=True)
+    # agent.train()
+    for i in range(10):
+        agent.test()
+
+# DQN 4/10 victory
+# DQN double 7/10 victory
