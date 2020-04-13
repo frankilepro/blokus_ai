@@ -15,11 +15,11 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
 
         self.layers = nn.Sequential(
-            nn.Linear(in_dim, 128),
+            nn.Linear(in_dim, 24),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(24, 24),
             nn.ReLU(),
-            nn.Linear(128, out_dim)
+            nn.Linear(24, out_dim)
         )
 
     def forward(self, x):
@@ -52,8 +52,8 @@ class Agent:
                  model_filename,
                  eps=1,
                  min_eps=0.01,
-                 eps_decay=0.99,
-                 gamma=0.99,
+                 eps_decay=0.005,
+                 gamma=0.9,
                  is_double=False):
         self.env = env
         self.num_episodes = num_episodes
@@ -65,8 +65,8 @@ class Agent:
         self.eps_decay = eps_decay
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
-        # self.model = DQN(env.observation_space.n, env.action_space.n).to(self.device)
-        self.model = torch.load(self.model_path, map_location=self.device)
+        self.model = DQN(env.observation_space.n, env.action_space.n).to(self.device)
+        # self.model = torch.load(self.model_path, map_location=self.device)
         self.is_double = is_double
         self.loss = []
         if self.is_double:
@@ -134,12 +134,9 @@ class Agent:
                 next_state = self.ohe(next_state)
                 self.memory.add_to_memory(state, action, next_state, reward, done)
 
-                if len(self.memory) > self.batch_size:
-                    self.replay()
-
                 target = self.get_target(reward, done, next_state)
                 self.update(state, target, action)
-                self.eps = max(self.min_eps, self.eps * self.eps_decay)
+                self.eps = self.min_eps + (self.eps - self.min_eps)*np.exp(-self.eps_decay*i)
 
                 rewards_lst.append(rewards)
                 state = next_state
@@ -147,6 +144,9 @@ class Agent:
                 if not i % 20 and self.is_double:
                     self.model_target.load_state_dict(self.model.state_dict())
 
+            if len(self.memory) > self.batch_size:
+                self.replay()
+                
             if not i % 10 and i != 0:
                 print('Episode {} Loss: {} Reward Rate {}'.format(i, self.loss[-1], str(sum(rewards_lst) / i)))
                 if (sum(rewards_lst) / i) > best_rate:
@@ -160,8 +160,9 @@ class Agent:
         done = False
         state = self.ohe(self.env.reset())
         rewards = 0
+        self.eps = self.min_eps
         while not done:
-            action = int(self.model(state).argmax().detach().cpu())
+            action = self.eps_greedy_action(state)
             self.env.render()
             next_state, reward, done, info = self.env.step(action)
             rewards += reward
@@ -172,13 +173,13 @@ class Agent:
 
 if __name__ == "__main__":
     env = gym.make("FrozenLake-v0")
-    memory_size = 500
+    memory_size = 10000
     num_episodes = 10000
     batch_size = 32
-    gamma = 0.999
+    # gamma = 0.999
     learning_rate = 0.001
-    model_filename = "frozen_lake_DQN"
+    model_filename = "frozen_lake_DQN_t"
 
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename)
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False)
     agent.train()
     # agent.test()
