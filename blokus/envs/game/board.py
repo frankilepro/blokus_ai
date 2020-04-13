@@ -95,9 +95,11 @@ class Board:
         else:
             return False
 
-    def print_board(self, num=None, fancy=True):
-        if fancy:
+    def print_board(self, num=None, mode="human"):
+        if mode == "human":
             self.fancyBoard(num)
+        elif mode == "minimal":
+            self.print_board_min()
         else:
             self.printBoard()
 
@@ -116,6 +118,11 @@ class Board:
         print()
         for i, row in enumerate(self.state):
             print(str(i) + ' ' * (n-len(str(i))), (' ' * n).join(row))
+
+    def print_board_min(self):
+        all_non_zeros = self.tensor != 0
+        coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
+        print(f"Coverage: {coverage:.2f}%")
 
     def fancyBoard(self, num):
         plt.clf()

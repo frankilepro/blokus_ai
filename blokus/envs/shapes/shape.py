@@ -41,6 +41,8 @@ class Shape:
     def __init__(self):
         self.ID = "None"
         self.size = 1
+        self.points = []
+        self.corners = []
 
     def create(self, num, pt):
         self.set_points(0, 0)
@@ -97,6 +99,26 @@ class Shape:
             self.corners = list(map(no_flip, self.corners))
         else:
             raise Exception("Invalid orientation.")
+
+    @staticmethod
+    def from_json(obj):
+        shape = Shape()
+        for key, value in obj.items():
+            if key != "refpt" and isinstance(value, list):
+                setattr(shape, key, [tuple(l) for l in value])
+            else:
+                setattr(shape, key, value)
+
+        return shape
+
+    def to_json(self):
+        return vars(self)
+
+    def __eq__(self, value):
+        return sorted(self.points) == sorted(value.points)
+
+    def __hash__(self):
+        return hash(str(sorted(self.points)))
 
     def __str__(self):
         return "\n".join([f"Id: {self.ID}", f"Size: {self.size}",
