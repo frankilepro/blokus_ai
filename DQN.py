@@ -1,5 +1,6 @@
 from collections import deque
 import os
+import math
 
 import torch
 import random
@@ -12,6 +13,8 @@ import torch.optim as optim
 from blokus.envs.blokus_env import BlokusEnv
 from segment_tree import SegmentTree
 
+
+### Models ###
 class DQN(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(DQN, self).__init__()
@@ -28,6 +31,80 @@ class DQN(nn.Module):
         return self.layers(x)
 
 
+class DuelingNetwork(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super(DuelingNetwork, self).__init__()
+        self.input_layer = nn.Sequential(nn.Linear(in_dim, 24),
+                                         nn.ReLU())
+        self.advantage_layer = nn.Sequential(nn.Linear(24, 24),
+                                             nn.ReLU(),
+                                             nn.Linear(24, out_dim))
+        self.value_layer = nn.Sequential(nn.Linear(24, 24),
+                                         nn.ReLU(),
+                                         nn.Linear(24, 1))
+
+    def forward(self, x):
+        x = self.input_layer(x)
+        advantage = self.advantage_layer(x)
+        value = self.value_layer(x)
+        return advantage + value - advantage.mean()
+
+
+class NoisyNetwork(nn.Module):
+    def __init__(self, in_dim, out_dim, sigma_init=0.4):
+        super(NoisyNetwork, self).__init__()
+        self.input_layer = nn.Sequential(nn.Linear(in_dim, 24),
+                                         nn.ReLU())
+        self.hidden_noisy_layer = NoisyLayer(24, 24, sigma_init)
+        self.output_noisy_layer = NoisyLayer(24, out_dim, sigma_init)
+
+    def update_noise(self):
+        self.hidden_noisy_layer.update_noise()
+        self.output_noisy_layer.update_noise()
+
+    def forward(self, x):
+        x = self.input_layer(x)
+        x = nn.ReLU()(self.hidden_noisy_layer(x))
+        return self.output_noisy_layer(x)
+
+# Inspired from https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/05.noisy_net.ipynb
+class NoisyLayer(nn.Module):
+    def __init__(self, in_dim, out_dim, sigma_init):
+        super(NoisyLayer, self).__init__()
+        self.in_dim = in_dim
+        self.out_dim = out_dim
+        self.sigma_init = sigma_init
+        self.mu_w = nn.Parameter(torch.Tensor(out_dim, in_dim))
+        self.mu_b = nn.Parameter(torch.Tensor(out_dim))
+        self.sigma_w = nn.Parameter(torch.Tensor(out_dim, in_dim))
+        self.sigma_b = nn.Parameter(torch.Tensor(out_dim))
+        # Epsilon is not trainable
+        self.register_buffer("eps_w", torch.Tensor(out_dim, in_dim))
+        self.register_buffer("eps_b", torch.Tensor(out_dim))
+        self.init_params()
+        self.update_noise()
+
+    def init_params(self):
+        # Trainable params
+        self.mu_w.data.uniform_(-math.sqrt(1 / self.in_dim), math.sqrt(1 / self.in_dim))
+        self.mu_b.data.uniform_(-math.sqrt(1 / self.in_dim), math.sqrt(1 / self.in_dim))
+        self.sigma_w.data.fill_(self.sigma_init / math.sqrt(self.out_dim))
+        self.sigma_b.data.fill_(self.sigma_init / math.sqrt(self.out_dim))
+
+    def update_noise(self):
+        self.eps_w.copy_(self.factorize_noise(self.out_dim).ger(self.factorize_noise(self.in_dim)))
+        self.eps_b.copy_(self.factorize_noise(self.out_dim))
+
+    def factorize_noise(self, size):
+        # Modify scale to amplify or reduce noise
+        x = torch.Tensor(np.random.normal(loc=0.0, scale=0.001, size=size))
+        return x.sign().mul(x.abs().sqrt())
+
+    def forward(self, x):
+        return F.linear(x, self.mu_w + self.sigma_w * self.eps_w, self.mu_b + self.sigma_b * self.eps_b)
+
+
+### Memory buffers ###
 class ReplayMemory:
     def __init__(self, max_size, batch_size):
         self.max_size = max_size
@@ -44,7 +121,7 @@ class ReplayMemory:
         return random.sample(self.memory, self.batch_size)
 
 
-# TODO not finished
+# TODO not finishedparame
 class PrioritizedExperienceReplay(ReplayMemory):
     def __init__(self, max_size, batch_size, tree_capacity, a):
         super(PrioritizedExperienceReplay, self).__init__(max_size, batch_size)
@@ -66,6 +143,7 @@ class PrioritizedExperienceReplay(ReplayMemory):
             s = random.uniform(a, b)
 
 
+### Agent ###
 class Agent:
     def __init__(self,
                  env,
@@ -78,7 +156,9 @@ class Agent:
                  min_eps=0.01,
                  eps_decay=0.005,
                  gamma=0.9,
-                 is_double=False):
+                 is_double=False,
+                 is_dueling=False,
+                 is_noisy=False):
         self.env = env
         self.num_episodes = num_episodes
         self.gamma = gamma
@@ -90,9 +170,16 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        # self.obs_size = env.observation_space.n
-        self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
+        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        self.obs_size = env.observation_space.n
+        self.is_dueling = is_dueling
+        self.is_noisy = is_noisy
+        if self.is_dueling:
+            self.model = DuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
+        elif self.is_noisy:
+            self.model = NoisyNetwork(self.obs_size, env.action_space.n).to(self.device)
+        else:
+            self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
         # self.model = torch.load(self.model_path, map_location=self.device)
         self.is_double = is_double
         self.loss = []
@@ -120,6 +207,9 @@ class Agent:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+        if self.is_noisy:
+            self.model.update_noise()
 
     def get_target_double(self, next_state):
         # action = self.model(next_state).argmax()
@@ -149,6 +239,9 @@ class Agent:
         ohe_state[state] = 1
         return ohe_state
 
+    # def ohe(self, state):
+    #     return state.view(-1).type(torch.float32).to(self.device)
+
     def train(self):
         rewards_lst = []
         best_rate = 0
@@ -165,7 +258,7 @@ class Agent:
 
                 target = self.get_target(reward, done, next_state)
                 self.update(state, target, action)
-                self.eps = self.min_eps + (self.eps - self.min_eps)*np.exp(-self.eps_decay*i)
+                self.eps = self.min_eps + (self.eps - self.min_eps) * np.exp(-self.eps_decay * i)
 
                 rewards_lst.append(rewards)
                 state = next_state
@@ -203,21 +296,22 @@ class Agent:
         self.env.close()
 
 
-
 if __name__ == "__main__":
     env = gym.make("FrozenLake-v0")
     # env = BlokusEnv()
     memory_size = 1000
-    num_episodes = 10000
+    num_episodes = 4000
     batch_size = 32
     # gamma = 0.999
     learning_rate = 0.001
-    model_filename = "test2"
+    model_filename = "noisy_frozen_lake"
 
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=True)
-    # agent.train()
-    for i in range(10):
-        agent.test()
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False,
+                  is_dueling=False, is_noisy=True)
+    agent.train()
+    # for i in range(10):
+    #     agent.test()
 
-# DQN 4/10 victory
-# DQN double 7/10 victory
+# DQN 4/10 victories
+# DQN double 7/10 victories
+# Dueling 5/10 victories
