@@ -27,20 +27,20 @@ class BlokusEnv(gym.Env):
                       shapes.T5(), shapes.V5(), shapes.N(), shapes.Z5(), shapes.T4(),
                       shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
 
-        self.ai = Player("A", "ai", Random_Player)
-        second = Player("B", "Computer_B", Random_Player)
+        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
+        self.set_all_possible_moves()
+        self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
+
+        self.ai = Player("A", "ai", Random_Player, self.all_possible_indexes_to_moves)
+        second = Player("B", "Computer_B", Random_Player, self.all_possible_indexes_to_moves)
         standard_size = Board(14, 14, "_")
         ordering = [self.ai, second]
         random.shuffle(ordering)
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
 
-        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
-        self.set_all_possible_moves()
-        self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
-
     def step(self, action_id):
-        self.ai.strategy = lambda player, game: None if action_id is None else self.all_possible_indexes_to_moves[
-            action_id]
+        self.ai.strategy = lambda player, game:\
+            None if action_id is None else self.all_possible_indexes_to_moves[action_id]
         self.blokus_game.play()
 
         done, reward = self.get_done_reward()
@@ -74,7 +74,9 @@ class BlokusEnv(gym.Env):
         plt.close('all')
 
     def ai_possible_indexes(self):
-        possible_moves = self.ai.possible_moves([p for p in self.ai.pieces], self.blokus_game)
+        # TODO verify if values creates a list
+        possible_moves = self.ai.possible_moves_opt(self.blokus_game)
+        # possible_moves = self.ai.possible_moves([p for p in self.ai.pieces], self.blokus_game)
         possible_indexes = [self.all_possible_moves_to_indexes[move] for move in possible_moves]
         return possible_indexes
 

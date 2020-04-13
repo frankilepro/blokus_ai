@@ -13,6 +13,7 @@ while True:
     observation, reward, done, info = env.step(random.choice(actions))
 
     if done:
-        print("game done")
+        print(f"game done with reward {reward}")
         observation = env.reset()
+        # break
 env.close()

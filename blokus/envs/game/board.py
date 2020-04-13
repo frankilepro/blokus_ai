@@ -100,7 +100,7 @@ class Board:
             self.fancyBoard(num)
         elif mode == "minimal":
             self.print_board_min()
-        else:
+        elif mode == "old":
             self.printBoard()
 
     def printBoard(self):
