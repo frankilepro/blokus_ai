@@ -1,4 +1,5 @@
 import copy
+
 import numpy as np
 
 
@@ -41,7 +42,7 @@ def eval_move(piece, player, game, weights):
 
 
 class Player:
-    def __init__(self, label, name, strategy, all_moves):
+    def __init__(self, label, name, strategy, all_moves, game):
         self.label = label
         self.name = name
         self.piece_ids = set()
@@ -49,7 +50,7 @@ class Player:
         self.strategy = strategy
         self.score = 0
         self.all_moves = all_moves
-        self.remains_move = True
+        self.game = game
 
     def add_pieces(self, pieces):
         """
@@ -81,23 +82,28 @@ class Player:
             if (board.in_bounds(c) and (not board.overlap([c]))):
                 (self.corners).add(c)
 
-    def possible_moves_opt(self, game):
-        self.remains_move = False
+    @property
+    def remains_move(self):
+        for move in self.all_moves:
+            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move):
+                return True
+        return False
+
+    def possible_moves_opt(self):
         placements = []
         for move in self.all_moves:
-            if move.ID in self.piece_ids and game.valid_move(self, move.points):
+            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move):
                 placements.append(move)
-                self.remains_move = True
         return placements
 
-    def possible_moves(self, pieces, game, no_restriction=False):
+    def possible_moves(self, pieces, no_restriction=False):
         """
         Returns a unique list of placements, i.e. Shape objects
         with a particular flip, orientation, corners, and points.
         It uses a list of pieces (Shape objects) and the game, which includes
         its rules and valid moves, in order to find the placements.
         """
-        def check_corners(game, no_restriction):
+        def check_corners(no_restriction):
             """
             Updates the corners of the player, in case the
             corners have been covered by another player's pieces.
@@ -108,10 +114,11 @@ class Player:
                     for j in range(0, 14 + 1):
                         self.corners.add((i, j))
             else:
-                self.corners = set([(i, j) for (i, j) in self.corners if game.board.state[j][i] == game.board.null])
+                self.corners = set([(i, j) for (i, j) in self.corners
+                                    if self.game.board.state[j][i] == self.game.board.null])
 
         # Check the corners before proceeding.
-        check_corners(game, no_restriction)
+        check_corners(no_restriction)
         # This list of placements will be updated with valid ones.
         placements = []
         visited = []
@@ -133,15 +140,15 @@ class Player:
                         for rot in [90]*4:
                             try_out.rotate(rot)
                             candidate = copy.deepcopy(try_out)
-                            if game.valid_move(self, candidate.points):
+                            if self.game.valid_move(self, candidate.points):
                                 if not (set(candidate.points) in visited):
                                     placements.append(candidate)
                                     visited.append(set(candidate.points))
         return placements
 
-    def do_move(self, game):
+    def do_move(self):
         """
         Generates a move according to the Player's
         strategy and current state of the board.
         """
-        return self.strategy(self, game)
+        return self.strategy(self)

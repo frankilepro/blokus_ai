@@ -5,7 +5,7 @@ register(
     entry_point='blokus.envs:BlokusEnv',
 )
 
-register(
-    id='blokus-hard-v0',
-    entry_point='blokus.envs:BlokusHardEnv',
-)
+# register(
+#     id='blokus-hard-v0',
+#     entry_point='blokus.envs:BlokusHardEnv',
+# )

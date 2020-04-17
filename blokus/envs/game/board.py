@@ -16,10 +16,18 @@ class Board:
         plt.ion()
         self.size = (n, m)
         self.player_ids = {}
-        self.tensor = torch.zeros(self.size, dtype=torch.int32)
+        self._tensor = torch.zeros(self.size, dtype=torch.int32)
         self.null = null
         self.empty = [[self.null] * m for i in range(n)]
         self.state = self.empty
+
+    @property
+    def tensor(self):
+        return self._tensor.numpy()
+
+    # @tensor.setter
+    # def tensor(self, value):
+    #     self._tensor = value
 
     def update(self, player, move):
         """
@@ -34,7 +42,7 @@ class Board:
             for col in range(len(self.state[1])):
                 if (col, row) in move:
                     self.state[row][col] = player.label
-                    self.tensor[row][col] = id
+                    self._tensor[row][col] = id
 
     def in_bounds(self, point):
         """
@@ -120,7 +128,7 @@ class Board:
             print(str(i) + ' ' * (n-len(str(i))), (' ' * n).join(row))
 
     def print_board_min(self):
-        all_non_zeros = self.tensor != 0
+        all_non_zeros = self._tensor != 0
         coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
         print(f"Coverage: {coverage:.2f}%")
 
