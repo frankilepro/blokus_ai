@@ -22,10 +22,10 @@ class BlokusGame(Game):
         # if False in [mv == [] for mv in moves]:
         remains_moves = [p.remains_move for p in self.players]
         if True in remains_moves:
-            return("None")
+            return "None"
         else:
             cand = [(p.score, p.name) for p in self.players]
-            return(sorted(cand, reverse=True)[0][1])
+            return sorted(cand, reverse=True)[0][1]
 
     def valid_move(self, player, move):
         """

@@ -209,8 +209,8 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        self.obs_size = env.observation_space.n
+        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        # self.obs_size = env.observation_space.n
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
@@ -269,7 +269,7 @@ class Agent:
 
     def get_target(self, reward, done, next_state):
         # y = r if done
-        target = torch.tensor(reward).to(self.device)
+        target = torch.tensor(reward).type(torch.float32).to(self.device)
         if not done:
             # y = r + gamma * max Q(s',a') if not done
             if self.is_double:
@@ -285,13 +285,13 @@ class Agent:
             target = self.get_target(reward, done, next_state)
             self.update(state, target, action)
 
-    def ohe(self, state):
-        ohe_state = torch.zeros(self.env.observation_space.n).to(self.device)
-        ohe_state[state] = 1
-        return ohe_state
-
     # def ohe(self, state):
-    #     return state.view(-1).type(torch.float32).to(self.device)
+    #     ohe_state = torch.zeros(self.obs_size).to(self.device)
+    #     ohe_state[state] = 1
+    #     return ohe_state
+
+    def ohe(self, state):
+        return state.view(-1).type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
@@ -303,6 +303,7 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, info = self.env.step(action)
+                env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
                 self.memory.add_to_memory(state, action, next_state, reward, done)
@@ -348,8 +349,8 @@ class Agent:
 
 
 if __name__ == "__main__":
-    env = gym.make("FrozenLake-v0")
-    # env = BlokusEnv()
+    # env = gym.make("FrozenLake-v0")
+    env = gym.make("blokus:blokus-v0")
     memory_size = 1000
     num_episodes = 4000
     batch_size = 32
@@ -358,7 +359,7 @@ if __name__ == "__main__":
     model_filename = "noisy_frozen_lake"
 
     agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False,
-                  is_dueling=False, is_noisy=True)
+                  is_dueling=False, is_noisy=False)
     agent.train()
     # for i in range(10):
     #     agent.test()
