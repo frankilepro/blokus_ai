@@ -119,16 +119,18 @@ class DistributionalNetwork(nn.Module):
         super(DistributionalNetwork, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        self.num_bins = distr_params.num_bins
-        self.v_range = distr_params.v_range
+        self.num_bins = distr_params["num_bins"]
+        self.v_range = distr_params["v_range"]
         self.layers = nn.Sequential(nn.Linear(in_dim, 24),
                                     nn.ReLU(),
                                     nn.Linear(24, 24),
                                     nn.ReLU(),
                                     nn.Linear(24, self.out_dim * self.num_bins))
 
-    def forward(self, x):
+    def action_distr(self, x):
         x = self.layers(x)
-        x = x.reshape(-1, self.out_dim, self.num_bins)
-        x = nn.Softmax(dim=2)(x).clamp(1e-5)
-        return (x * self.v_range).sum(dim=2)
+        x = torch.reshape(x, (self.out_dim, self.num_bins))
+        return nn.Softmax(dim=-1)(x).clamp(1e-5)
+
+    def forward(self, x):
+        return torch.sum(self.action_distr(x) * self.v_range, dim=-1)

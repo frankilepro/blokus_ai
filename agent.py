@@ -62,15 +62,15 @@ class Agent:
         self.is_distributional = is_distributional
         if self.is_distributional:
             self.distr_params = distr_params
-            self.distr_params.v_range = torch.linspace(self.distr_params.v_min,
-                                                       self.distr_params.v_max,
-                                                       self.distr_params.num_bins)
+            self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
+                                                          self.distr_params["v_max"],
+                                                          self.distr_params["num_bins"]).to(self.device)
         if self.is_dueling:
             self.model = DuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
         elif self.is_noisy:
             self.model = NoisyNetwork(self.obs_size, env.action_space.n).to(self.device)
         elif self.is_distributional:
-            self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params)
+            self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
         else:
             self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
         # self.model = torch.load(self.model_path, map_location=self.device)
@@ -93,9 +93,13 @@ class Agent:
 
         return next_action
 
-    def update(self, state, target, action):
-        prediction = self.model(state, self.env)[action]
-        loss = F.smooth_l1_loss(prediction, target)
+    def update(self, reward, done, next_state, state, action):
+        if self.is_distributional:
+            loss = self.get_distributional_loss(reward, done, next_state, state, action)
+        else:
+            target = self.get_target(reward, done, next_state)
+            prediction = self.model(state, self.env)[action]
+            loss = F.smooth_l1_loss(prediction, target)
         self.loss.append(loss)
         self.optimizer.zero_grad()
         loss.backward()
@@ -104,9 +108,33 @@ class Agent:
         if self.is_noisy:
             self.model.update_noise()
 
-    def get_distributional_loss(self, next_state):
-        v_step = (self.distr_params.v_max - self.distr_params.v_min) / (self.distr_params.num_bins - 1)
-        next_action = self.model(next_state, self.env).argmax()
+    def get_distributional_loss(self, reward, done, next_state, state, action):
+        action_distr = self.model.action_distr(state)
+        log_action_distr = action_distr[:batch_size, action].log()
+
+        reward = torch.tensor(reward).type(torch.float32).to(self.device)
+        d_target = reward.clamp(self.distr_params["v_min"], self.distr_params["v_max"])
+        if done:
+            d_target = (self.gamma * self.distr_params["v_range"] + reward).clamp(self.distr_params["v_min"],
+                                                                                  self.distr_params["v_max"])
+        v_step = (self.distr_params["v_max"] - self.distr_params["v_min"]) / (self.distr_params["num_bins"] - 1)
+        delta = (d_target - self.distr_params["v_min"]) / v_step
+
+        offset = torch.linspace(0,
+                                (self.batch_size - 1) * self.distr_params["num_bins"],
+                                self.batch_size).to(self.device)
+        next_action = self.model(next_state).argmax()
+        next_action_distr = self.model.action_distr(next_state)[next_action, :self.batch_size]
+
+        # Projection
+        distr_projection = torch.zeros(next_action_distr.shape).to(self.device)
+        distr_projection.reshape(-1).index_add_(0,
+                                                (delta.floor() + offset).long(),
+                                                next_action_distr * (delta.ceil() - delta))
+        distr_projection.reshape(-1).index_add_(0,
+                                                (delta.ceil() + offset).long(),
+                                                next_action_distr * (delta - delta.floor()))
+        return - (distr_projection * log_action_distr).sum(-1).mean()
 
     def get_target_double(self, next_state):
         action = self.model(next_state, self.env).argmax()
@@ -121,7 +149,7 @@ class Agent:
                 next_state_max_Q = self.get_target_double(next_state)
             else:
                 next_state_max_Q = self.model(next_state, self.env).max()
-            target = (next_state_max_Q * self.gamma) + reward
+            target = next_state_max_Q * self.gamma + reward
         return target
 
     def replay(self):
@@ -153,8 +181,7 @@ class Agent:
                 next_state = self.ohe(next_state)
                 self.memory.add_to_memory(state, action, next_state, reward, done)
 
-                target = self.get_target(reward, done, next_state)
-                self.update(state, target, action)
+                self.update(reward, done, next_state, state, action)
                 self.eps = self.min_eps + (self.eps - self.min_eps) * np.exp(-self.eps_decay * i)
 
                 rewards_lst.append(rewards)
@@ -203,8 +230,9 @@ if __name__ == "__main__":
     learning_rate = 0.001
     model_filename = "noisy_frozen_lake"
 
+    dist_params = {"num_bins":51, "v_min":0, "v_max":1}
     agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False,
-                  is_dueling=False, is_noisy=False)
+                  is_dueling=False, is_noisy=False, is_distributional=True, distr_params=dist_params)
     agent.train()
     # for i in range(10):
     #     agent.test()
