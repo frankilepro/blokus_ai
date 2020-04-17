@@ -51,7 +51,6 @@ class Player:
         self.score = 0
         self.all_moves = all_moves
         self.game = game
-        # self.remains_move = True
 
     def add_pieces(self, pieces):
         """
@@ -86,17 +85,15 @@ class Player:
     @property
     def remains_move(self):
         for move in self.all_moves:
-            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move.points):
+            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move):
                 return True
         return False
 
     def possible_moves_opt(self):
-        # self.remains_move = False
         placements = []
         for move in self.all_moves:
-            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move.points):
+            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move):
                 placements.append(move)
-                # self.remains_move = True
         return placements
 
     def possible_moves(self, pieces, no_restriction=False):

@@ -8,8 +8,7 @@ while True:
     env.render("human")
     action = env.action_space.sample()
 
-    observation, reward, done, info = env.step(10)
-    print(reward)
+    observation, reward, done, info = env.step(action)
 
     if done:
         print(f"game done with reward {reward}")

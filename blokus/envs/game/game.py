@@ -16,18 +16,6 @@ class Game:
         self.board = board
         self.all_pieces = all_pieces
 
-        # self.start()
-
-    # def start(self):
-    #     # When the game has not begun yet, the game must
-    #     # give the players their pieces and a corner to start.
-    #     max_x = ((self.board).size[1] - 1)
-    #     max_y = ((self.board).size[0] - 1)
-    #     starts = [(0, 0), (max_y, max_x), (0, max_x), (max_y, 0)]
-    #     for i in range(len(self.players)):
-    #         (self.players[i]).add_pieces(self.all_pieces)
-    #         (self.players[i]).start_corner(starts[i])
-
     def add_player(self, player):
         max_x = ((self.board).size[1] - 1)
         max_y = ((self.board).size[0] - 1)
@@ -79,7 +67,7 @@ class Game:
                 self.players = self.players + [first]
                 self.rounds += 1
             # ensure that the proposed move is valid
-            elif self.valid_move(current, proposal.points):
+            elif self.valid_move(current, proposal):
                 proposal.is_played = True
                 # update the board with the move
                 (self.board).update(current, proposal.points)

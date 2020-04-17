@@ -30,17 +30,21 @@ class BlokusGame(Game):
         Uses functions from the board to see whether
         a player's proposed move is valid.
         """
+        if move.ID not in player.piece_ids:
+            return False
+
+        move_points = move.points
         if self.rounds < len(self.players):
-            if ((False in [(self.board).in_bounds(pt) for pt in move])
-                or (self.board).overlap(move)
-                    or not (True in [(pt in player.corners) for pt in move])):
+            if ((False in [(self.board).in_bounds(pt) for pt in move_points])
+                or (self.board).overlap(move_points)
+                    or not (True in [(pt in player.corners) for pt in move_points])):
                 return(False)
             else:
                 return(True)
-        elif ((False in [(self.board).in_bounds(pt) for pt in move])
-              or (self.board).overlap(move)
-                or (self.board).adj(player, move)
-                or not (self.board).corner(player, move)):
+        elif ((False in [(self.board).in_bounds(pt) for pt in move_points])
+              or (self.board).overlap(move_points)
+                or (self.board).adj(player, move_points)
+                or not (self.board).corner(player, move_points)):
             return(False)
         else:
             return(True)
