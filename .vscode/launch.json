@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Play",
+            "name": "Python File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/play.py",
+            "program": "${file}",
             "console": "integratedTerminal"
         }
     ]

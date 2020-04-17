@@ -49,7 +49,7 @@ class Player:
         self.strategy = strategy
         self.score = 0
         self.all_moves = all_moves
-        self.remains_move = False
+        self.remains_move = True
 
     def add_pieces(self, pieces):
         """

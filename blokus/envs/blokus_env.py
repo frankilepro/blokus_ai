@@ -30,6 +30,7 @@ class BlokusEnv(gym.Env):
         self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
         self.set_all_possible_moves()
         self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
+        self.action_space.sample = self.ai_sample_possible_index
 
         self.ai = Player("A", "ai", Random_Player, self.all_possible_indexes_to_moves)
         second = Player("B", "Computer_B", Random_Player, self.all_possible_indexes_to_moves)
@@ -72,6 +73,12 @@ class BlokusEnv(gym.Env):
 
     def close(self):
         plt.close('all')
+
+    def ai_sample_possible_index(self):
+        actions = self.ai_possible_indexes()
+        if len(actions) > 0:
+            return random.choice(actions)
+        return None
 
     def ai_possible_indexes(self):
         # TODO verify if values creates a list

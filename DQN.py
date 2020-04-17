@@ -182,6 +182,7 @@ class Agent:
                         the distribution return), v_min (minimal state value), v_max (maximal state value)
                         e.i: {num_bin:51, v_min:0, v_max:1} 51 atoms are used in the paper
     """
+
     def __init__(self,
                  env,
                  memory_size,
@@ -262,7 +263,6 @@ class Agent:
         v_step = (self.distr_params.v_max - self.distr_params.v_min) / (self.distr_params.num_bins - 1)
         next_action = self.model(next_state).argmax()
 
-
     def get_target_double(self, next_state):
         action = self.model(next_state).argmax()
         return self.model_target(next_state)[action]
@@ -303,7 +303,7 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, info = self.env.step(action)
-                env.render("human")
+                env.render("minmal")
                 rewards += reward
                 next_state = self.ohe(next_state)
                 self.memory.add_to_memory(state, action, next_state, reward, done)
