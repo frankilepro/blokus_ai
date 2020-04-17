@@ -41,19 +41,21 @@ def eval_move(piece, player, game, weights):
 
 
 class Player:
-    def __init__(self, label, name, strategy):
+    def __init__(self, label, name, strategy, all_moves):
         self.label = label
         self.name = name
-        self.pieces = []
+        self.piece_ids = set()
         self.corners = set()
         self.strategy = strategy
         self.score = 0
+        self.all_moves = all_moves
+        self.remains_move = False
 
     def add_pieces(self, pieces):
         """
         Gives a player the initial set of pieces.
         """
-        self.pieces = pieces
+        self.piece_ids = set(p.ID for p in pieces)
 
     def start_corner(self, p):
         """
@@ -66,7 +68,7 @@ class Player:
         Removes a given piece (Shape object) from
         the list of pieces a player has.
         """
-        self.pieces = [s for s in self.pieces if s.ID != piece.ID]
+        self.piece_ids.remove(piece.ID)
 
     def update_player(self, placement, board):
         """
@@ -78,6 +80,15 @@ class Player:
         for c in placement.corners:
             if (board.in_bounds(c) and (not board.overlap([c]))):
                 (self.corners).add(c)
+
+    def possible_moves_opt(self, game):
+        self.remains_move = False
+        placements = []
+        for move in self.all_moves:
+            if move.ID in self.piece_ids and game.valid_move(self, move.points):
+                placements.append(move)
+                self.remains_move = True
+        return placements
 
     def possible_moves(self, pieces, game, no_restriction=False):
         """

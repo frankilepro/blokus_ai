@@ -43,6 +43,7 @@ class Shape:
         self.size = 1
         self.points = []
         self.corners = []
+        self.index = -1
 
     def create(self, num, pt):
         self.set_points(0, 0)
@@ -111,13 +112,16 @@ class Shape:
 
         return shape
 
-    def to_json(self):
+    def to_json(self, idx):
+        self.idx = idx
         return vars(self)
 
     def __eq__(self, value):
+        # return self.idx == value.idx TODO optimize
         return sorted(self.points) == sorted(value.points)
 
     def __hash__(self):
+        # return self.idx TODO optimize
         return hash(str(sorted(self.points)))
 
     def __str__(self):

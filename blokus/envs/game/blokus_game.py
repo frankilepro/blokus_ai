@@ -18,8 +18,10 @@ class BlokusGame(Game):
         """
         # Credit to Dariusz Walczak for inspiration.
         # http://stackoverflow.com/questions/1720421/merge-two-lists-in-python
-        moves = [p.possible_moves(p.pieces, self) for p in self.players]
-        if False in [mv == [] for mv in moves]:
+        # moves = [p.possible_moves(p.pieces, self) for p in self.players]
+        # if False in [mv == [] for mv in moves]:
+        remains_moves = [p.remains_move for p in self.players]
+        if True in remains_moves:
             return("None")
         else:
             cand = [(p.score, p.name) for p in self.players]

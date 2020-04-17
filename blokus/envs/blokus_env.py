@@ -27,19 +27,20 @@ class BlokusEnv(gym.Env):
                       shapes.T5(), shapes.V5(), shapes.N(), shapes.Z5(), shapes.T4(),
                       shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
 
-        self.ai = Player("A", "ai", Random_Player)
-        second = Player("B", "Computer_B", Random_Player)
+        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
+        self.set_all_possible_moves()
+        self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
+
+        self.ai = Player("A", "ai", Random_Player, self.all_possible_indexes_to_moves)
+        second = Player("B", "Computer_B", Random_Player, self.all_possible_indexes_to_moves)
         standard_size = Board(14, 14, "_")
         ordering = [self.ai, second]
         random.shuffle(ordering)
         self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
 
-        self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
-        self.set_all_possible_moves()
-        self.action_space = spaces.Discrete(len(self.all_possible_ids_to_moves))
-
     def step(self, action_id):
-        self.ai.strategy = lambda player, game: None if action_id is None else self.all_possible_ids_to_moves[action_id]
+        self.ai.strategy = lambda player, game:\
+            None if action_id is None else self.all_possible_indexes_to_moves[action_id]
         self.blokus_game.play()
 
         done, reward = self.get_done_reward()
@@ -72,23 +73,25 @@ class BlokusEnv(gym.Env):
     def close(self):
         plt.close('all')
 
-    def ai_possible_ids(self):
-        possible_moves = self.ai.possible_moves([p for p in self.ai.pieces], self.blokus_game)
-        possible_ids = [self.all_possible_moves_to_ids[move] for move in possible_moves]
-        return possible_ids
+    def ai_possible_indexes(self):
+        # TODO verify if values creates a list
+        possible_moves = self.ai.possible_moves_opt(self.blokus_game)
+        # possible_moves = self.ai.possible_moves([p for p in self.ai.pieces], self.blokus_game)
+        possible_indexes = [self.all_possible_moves_to_indexes[move] for move in possible_moves]
+        return possible_indexes
 
     def set_all_possible_moves(self):
         if os.path.exists(self.STATES_FILE):
             with open(self.STATES_FILE) as json_file:
-                self.all_possible_ids_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
+                self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
         else:
-            self.all_possible_ids_to_moves = self.ai.possible_moves(
+            self.all_possible_indexes_to_moves = self.ai.possible_moves(
                 [p for p in self.ai.pieces], self.blokus_game, no_restriction=True)
-            data = [move.to_json() for move in self.all_possible_ids_to_moves]
+            data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
             with open(self.STATES_FILE, "w") as json_file:
                 json.dump(data, json_file)
             self.blokus_game.start()
 
-        self.all_possible_moves_to_ids = {}
-        for idx, move in enumerate(self.all_possible_ids_to_moves):
-            self.all_possible_moves_to_ids[move] = idx
+        self.all_possible_moves_to_indexes = {}
+        for move in self.all_possible_indexes_to_moves:
+            self.all_possible_moves_to_indexes[move] = move.idx
