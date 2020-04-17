@@ -24,9 +24,25 @@ class DQN(nn.Module):
                                     nn.Linear(24, 24),
                                     nn.ReLU(),
                                     nn.Linear(24, out_dim))
+        # Softamx only on valid moves
+        self.custom_softmax = LegalSoftmax()
 
-    def forward(self, x):
-        return self.layers(x)
+    def forward(self, x, env):
+        x = self.layers(x)
+        return self.custom_softmax(x, env)
+
+
+class LegalSoftmax(nn.Module):
+    def __init__(self):
+        super(LegalSoftmax, self).__init__()
+
+    def forward(self, x, env):
+        # legal_moves = env.ai_possible_indexes()
+        legal_moves = [0, 1, 2, 3]
+        actions_tensor = torch.zeros(x.shape).to(x.device)
+        actions_tensor[legal_moves] = 1
+        filtered_actions = x * actions_tensor
+        return F.softmax(filtered_actions, dim=0)
 
 
 class DuelingNetwork(nn.Module):
@@ -210,8 +226,8 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        # self.obs_size = env.observation_space.n
+        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        self.obs_size = env.observation_space.n
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
@@ -244,12 +260,12 @@ class Agent:
             next_action = self.env.action_space.sample()
         # Greedy choice (exploitation)
         else:
-            next_action = int(self.model(state).argmax().detach().cpu())
+            next_action = int(self.model(state, self.env).argmax().detach().cpu())
 
         return next_action
 
     def update(self, state, target, action):
-        prediction = self.model(state)[action]
+        prediction = self.model(state, self.env)[action]
         loss = F.smooth_l1_loss(prediction, target)
         self.loss.append(loss)
         self.optimizer.zero_grad()
@@ -261,10 +277,10 @@ class Agent:
 
     def get_distributional_loss(self, next_state):
         v_step = (self.distr_params.v_max - self.distr_params.v_min) / (self.distr_params.num_bins - 1)
-        next_action = self.model(next_state).argmax()
+        next_action = self.model(next_state, self.env).argmax()
 
     def get_target_double(self, next_state):
-        action = self.model(next_state).argmax()
+        action = self.model(next_state, self.env).argmax()
         return self.model_target(next_state)[action]
 
     def get_target(self, reward, done, next_state):
@@ -275,7 +291,7 @@ class Agent:
             if self.is_double:
                 next_state_max_Q = self.get_target_double(next_state)
             else:
-                next_state_max_Q = self.model(next_state).max()
+                next_state_max_Q = self.model(next_state, self.env).max()
             target = (next_state_max_Q * self.gamma) + reward
         return target
 
@@ -285,13 +301,13 @@ class Agent:
             target = self.get_target(reward, done, next_state)
             self.update(state, target, action)
 
-    # def ohe(self, state):
-    #     ohe_state = torch.zeros(self.obs_size).to(self.device)
-    #     ohe_state[state] = 1
-    #     return ohe_state
-
     def ohe(self, state):
-        return state.view(-1).type(torch.float32).to(self.device)
+        ohe_state = torch.zeros(self.obs_size).to(self.device)
+        ohe_state[state] = 1
+        return ohe_state
+
+    # def ohe(self, state):
+    #     return state.view(-1).type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
@@ -303,7 +319,7 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, info = self.env.step(action)
-                env.render("minmal")
+                # env.render("minmal")
                 rewards += reward
                 next_state = self.ohe(next_state)
                 self.memory.add_to_memory(state, action, next_state, reward, done)
@@ -349,8 +365,8 @@ class Agent:
 
 
 if __name__ == "__main__":
-    # env = gym.make("FrozenLake-v0")
-    env = gym.make("blokus:blokus-v0")
+    env = gym.make("FrozenLake-v0")
+    # env = gym.make("blokus:blokus-v0")
     memory_size = 1000
     num_episodes = 4000
     batch_size = 32
