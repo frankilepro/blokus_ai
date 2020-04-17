@@ -19,13 +19,11 @@ class DQN(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(DQN, self).__init__()
 
-        self.layers = nn.Sequential(
-            nn.Linear(in_dim, 24),
-            nn.ReLU(),
-            nn.Linear(24, 24),
-            nn.ReLU(),
-            nn.Linear(24, out_dim)
-        )
+        self.layers = nn.Sequential(nn.Linear(in_dim, 24),
+                                    nn.ReLU(),
+                                    nn.Linear(24, 24),
+                                    nn.ReLU(),
+                                    nn.Linear(24, out_dim))
 
     def forward(self, x):
         return self.layers(x)
@@ -67,6 +65,7 @@ class NoisyNetwork(nn.Module):
         x = nn.ReLU()(self.hidden_noisy_layer(x))
         return self.output_noisy_layer(x)
 
+
 # Inspired from https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/05.noisy_net.ipynb
 class NoisyLayer(nn.Module):
     def __init__(self, in_dim, out_dim, sigma_init):
@@ -86,10 +85,10 @@ class NoisyLayer(nn.Module):
 
     def init_params(self):
         # Trainable params
-        self.mu_w.data.uniform_(-math.sqrt(1 / self.in_dim), math.sqrt(1 / self.in_dim))
-        self.mu_b.data.uniform_(-math.sqrt(1 / self.in_dim), math.sqrt(1 / self.in_dim))
-        self.sigma_w.data.fill_(self.sigma_init / math.sqrt(self.out_dim))
-        self.sigma_b.data.fill_(self.sigma_init / math.sqrt(self.out_dim))
+        nn.init.uniform_(self.mu_w, -math.sqrt(1 / self.in_dim), math.sqrt(1 / self.in_dim))
+        nn.init.uniform_(self.mu_b, -math.sqrt(1 / self.in_dim), math.sqrt(1 / self.in_dim))
+        nn.init.constant_(self.sigma_w, self.sigma_init / math.sqrt(self.out_dim))
+        nn.init.constant_(self.sigma_b, self.sigma_init / math.sqrt(self.out_dim))
 
     def update_noise(self):
         self.eps_w.copy_(self.factorize_noise(self.out_dim).ger(self.factorize_noise(self.in_dim)))
@@ -102,6 +101,26 @@ class NoisyLayer(nn.Module):
 
     def forward(self, x):
         return F.linear(x, self.mu_w + self.sigma_w * self.eps_w, self.mu_b + self.sigma_b * self.eps_b)
+
+
+class DistributionalNetwork(nn.Module):
+    def __init__(self, in_dim, out_dim, distr_params):
+        super(DistributionalNetwork, self).__init__()
+        self.in_dim = in_dim
+        self.out_dim = out_dim
+        self.num_bins = distr_params.num_bins
+        self.v_range = distr_params.v_range
+        self.layers = nn.Sequential(nn.Linear(in_dim, 24),
+                                    nn.ReLU(),
+                                    nn.Linear(24, 24),
+                                    nn.ReLU(),
+                                    nn.Linear(24, self.out_dim * self.num_bins))
+
+    def forward(self, x):
+        x = self.layers(x)
+        x = x.reshape(-1, self.out_dim, self.num_bins)
+        x = nn.Softmax(dim=2)(x).clamp(1e-5)
+        return (x * self.v_range).sum(dim=2)
 
 
 ### Memory buffers ###
@@ -145,6 +164,24 @@ class PrioritizedExperienceReplay(ReplayMemory):
 
 ### Agent ###
 class Agent:
+    """
+    :param env: gym environment
+    :param memory_size: maximum capacity of the memory replay
+    :param batch_size
+    :param learning_rate
+    :param num_episodes: number of games played to train on
+    :param eps: initial epsilon value in the epsilon-greedy policy
+    :param min_eps: minimal possible value of epsilon in the epsilon-greedy policy
+    :param eps_decay: decrease rate of epsilon in the epsilon-greedy policy
+    :param gamma: discount factor used to measure the target
+    :param is_double: boolean to have double DQN network
+    :param is_dueling: boolean to have dueling network
+    :param is_noisy: boolean to have a noisy network
+    :param is_distributional: boolean to have a distributional network
+    :param dist_params: dictionary containing parameters for distributional network including num_bins (number of bins
+                        the distribution return), v_min (minimal state value), v_max (maximal state value)
+                        e.i: {num_bin:51, v_min:0, v_max:1} 51 atoms are used in the paper
+    """
     def __init__(self,
                  env,
                  memory_size,
@@ -158,7 +195,9 @@ class Agent:
                  gamma=0.9,
                  is_double=False,
                  is_dueling=False,
-                 is_noisy=False):
+                 is_noisy=False,
+                 is_distributional=False,
+                 distr_params=None):
         self.env = env
         self.num_episodes = num_episodes
         self.gamma = gamma
@@ -174,10 +213,18 @@ class Agent:
         self.obs_size = env.observation_space.n
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
+        self.is_distributional = is_distributional
+        if self.is_distributional:
+            self.distr_params = distr_params
+            self.distr_params.v_range = torch.linspace(self.distr_params.v_min,
+                                                       self.distr_params.v_max,
+                                                       self.distr_params.num_bins)
         if self.is_dueling:
             self.model = DuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
         elif self.is_noisy:
             self.model = NoisyNetwork(self.obs_size, env.action_space.n).to(self.device)
+        elif self.is_distributional:
+            self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params)
         else:
             self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
         # self.model = torch.load(self.model_path, map_location=self.device)
@@ -211,10 +258,14 @@ class Agent:
         if self.is_noisy:
             self.model.update_noise()
 
+    def get_distributional_loss(self, next_state):
+        v_step = (self.distr_params.v_max - self.distr_params.v_min) / (self.distr_params.num_bins - 1)
+        next_action = self.model(next_state).argmax()
+
+
     def get_target_double(self, next_state):
-        # action = self.model(next_state).argmax()
-        # return self.model_target(next_state)[action]
-        return self.model_target(next_state).max()
+        action = self.model(next_state).argmax()
+        return self.model_target(next_state)[action]
 
     def get_target(self, reward, done, next_state):
         # y = r if done
@@ -315,3 +366,4 @@ if __name__ == "__main__":
 # DQN 4/10 victories
 # DQN double 7/10 victories
 # Dueling 5/10 victories
+# Noisy network (std = 0.001) 6/10
