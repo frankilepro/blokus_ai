@@ -44,6 +44,7 @@ class Shape:
         self.points = []
         self.corners = []
         self.index = -1
+        self.is_played = False
 
     def create(self, num, pt):
         self.set_points(0, 0)

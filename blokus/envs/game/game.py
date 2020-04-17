@@ -1,3 +1,7 @@
+class InvalidMoveByAi(Exception):
+    pass
+
+
 class Game:
     """
     A class that takes a list of players objects,
@@ -6,23 +10,31 @@ class Game:
     of moves proposed to the game.
     """
 
-    def __init__(self, players, board, all_pieces):
-        self.players = players
+    def __init__(self, board, all_pieces):
+        self.players = []
         self.rounds = 0
         self.board = board
         self.all_pieces = all_pieces
 
-        self.start()
+        # self.start()
 
-    def start(self):
-        # When the game has not begun yet, the game must
-        # give the players their pieces and a corner to start.
+    # def start(self):
+    #     # When the game has not begun yet, the game must
+    #     # give the players their pieces and a corner to start.
+    #     max_x = ((self.board).size[1] - 1)
+    #     max_y = ((self.board).size[0] - 1)
+    #     starts = [(0, 0), (max_y, max_x), (0, max_x), (max_y, 0)]
+    #     for i in range(len(self.players)):
+    #         (self.players[i]).add_pieces(self.all_pieces)
+    #         (self.players[i]).start_corner(starts[i])
+
+    def add_player(self, player):
         max_x = ((self.board).size[1] - 1)
         max_y = ((self.board).size[0] - 1)
         starts = [(0, 0), (max_y, max_x), (0, max_x), (max_y, 0)]
-        for i in range(len(self.players)):
-            (self.players[i]).add_pieces(self.all_pieces)
-            (self.players[i]).start_corner(starts[i])
+        player.add_pieces(self.all_pieces)
+        player.start_corner(starts[len(self.players)])
+        self.players.append(player)
 
     def winner(self):
         """
@@ -44,6 +56,9 @@ class Game:
     def next_player(self):
         return self.players[0]
 
+    def last_player(self):
+        return self.players[-1]
+
     def play(self):
         """
         Plays a list of Player objects sequentially,
@@ -57,7 +72,7 @@ class Game:
         if self.winner() == "None":
             current = self.players[0]
             # print("Current player: " + current.name)
-            proposal = current.do_move(self)
+            proposal = current.do_move()
             if proposal is None:
                 # move on to next player, increment rounds
                 first = (self.players).pop(0)
@@ -65,6 +80,7 @@ class Game:
                 self.rounds += 1
             # ensure that the proposed move is valid
             elif self.valid_move(current, proposal.points):
+                proposal.is_played = True
                 # update the board with the move
                 (self.board).update(current, proposal.points)
                 # let the player update itself accordingly
@@ -78,6 +94,8 @@ class Game:
                 self.rounds += 1
             # interrupts the game if an invalid move is proposed
             else:
+                if current.name == "ai":
+                    raise InvalidMoveByAi()
                 raise Exception("Invalid move by " + current.name + ".")
         else:
             print("Game over! And the winner is: " + self.winner())

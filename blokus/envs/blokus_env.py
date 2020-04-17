@@ -10,6 +10,7 @@ from blokus.envs.players.player import Player
 from blokus.envs.players.random_player import Random_Player
 from blokus.envs.game.board import Board
 from blokus.envs.game.blokus_game import BlokusGame
+from blokus.envs.game.game import InvalidMoveByAi
 import matplotlib.pyplot as plt
 import json
 
@@ -17,6 +18,7 @@ import json
 class BlokusEnv(gym.Env):
     STATES_FILE = "states.json"
     metadata = {'render.modes': ['human']}
+    rewards = {'default': 0, 'won': 1, 'invalid': -1, 'lost': -2}
 
     def __init__(self):
         self.init_game()
@@ -28,38 +30,54 @@ class BlokusEnv(gym.Env):
                       shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
 
         self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
-        self.set_all_possible_moves()
+        self.__set_all_possible_moves()
         self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
-        self.ai = Player("A", "ai", Random_Player, self.all_possible_indexes_to_moves)
-        second = Player("B", "Computer_B", Random_Player, self.all_possible_indexes_to_moves)
         standard_size = Board(14, 14, "_")
+        self.blokus_game = BlokusGame(standard_size, All_Shapes)
+        self.ai = Player("A", "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
+        second = Player("B", "Computer_B", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
         ordering = [self.ai, second]
         random.shuffle(ordering)
-        self.blokus_game = BlokusGame(ordering, standard_size, All_Shapes)
+        for player in ordering:
+            self.blokus_game.add_player(player)
 
     def step(self, action_id):
-        self.ai.strategy = lambda player, game:\
-            None if action_id is None else self.all_possible_indexes_to_moves[action_id]
-        self.blokus_game.play()
+        self.__set_ai_strategy(action_id)
 
-        done, reward = self.get_done_reward()
+        done, reward = self.__get_done_reward()
         while not done and self.blokus_game.next_player() != self.ai:
-            self.blokus_game.play()
-            done, reward = self.get_done_reward()
+            done, reward = self.__next_player_play()  # Let bots play
 
-        done, reward = self.get_done_reward()
+        done, reward = self.__next_player_play()  # Let ai play
+        if not self.ai.remains_move and not done:
+            while not done:
+                done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
         return self.blokus_game.board.tensor, reward, done, {}
 
-    def get_done_reward(self):
+    def __set_ai_strategy(self, action_id):
+        self.ai.strategy = lambda player:\
+            None if not self.ai.remains_move else self.all_possible_indexes_to_moves[action_id]
+
+    def __next_player_play(self):
+        try:
+            self.blokus_game.play()
+            return self.__get_done_reward()
+        except InvalidMoveByAi:
+            self.__set_ai_strategy(self.ai_sample_possible_index())
+            self.blokus_game.play()
+            done, reward = self.__get_done_reward()
+            return done, min(self.rewards['invalid'], reward)
+
+    def __get_done_reward(self):
         winner = self.blokus_game.winner()
         done = winner != "None"
         if done:
             if winner == "ai":
-                reward = 1
+                reward = self.rewards['won']
             else:
-                reward = -1
+                reward = self.rewards['lost']
         else:
             reward = 0
         return done, reward
@@ -76,18 +94,14 @@ class BlokusEnv(gym.Env):
 
     def ai_sample_possible_index(self):
         actions = self.ai_possible_indexes()
-        if len(actions) > 0:
-            return random.choice(actions)
-        return None
+        return random.choice(actions)
 
     def ai_possible_indexes(self):
-        # TODO verify if values creates a list
-        possible_moves = self.ai.possible_moves_opt(self.blokus_game)
-        # possible_moves = self.ai.possible_moves([p for p in self.ai.pieces], self.blokus_game)
+        possible_moves = self.ai.possible_moves_opt()
         possible_indexes = [self.all_possible_moves_to_indexes[move] for move in possible_moves]
         return possible_indexes
 
-    def set_all_possible_moves(self):
+    def __set_all_possible_moves(self):
         if os.path.exists(self.STATES_FILE):
             with open(self.STATES_FILE) as json_file:
                 self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
