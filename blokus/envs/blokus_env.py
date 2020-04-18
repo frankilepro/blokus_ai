@@ -25,18 +25,19 @@ class BlokusEnv(gym.Env):
         self.init_game()
 
     def init_game(self):
-        All_Shapes = [shapes.I1(), shapes.I2(), shapes.I3(), shapes.I4(), shapes.I5(),
-                      shapes.V3(), shapes.L4(), shapes.Z4(), shapes.O4(), shapes.L5(),
-                      shapes.T5(), shapes.V5(), shapes.N(), shapes.Z5(), shapes.T4(),
-                      shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
+        self.all_shapes = [shapes.I1(), shapes.I2(), shapes.I3(), shapes.I4(), shapes.I5(),
+                           shapes.V3(), shapes.L4(), shapes.Z4(), shapes.O4(), shapes.L5(),
+                           shapes.T5(), shapes.V5(), shapes.N(), shapes.Z5(), shapes.T4(),
+                           shapes.P(), shapes.W(), shapes.U(), shapes.F(), shapes.X(), shapes.Y()]
+
+        standard_size = Board(14, 14, "_")
+        self.blokus_game = BlokusGame(standard_size, self.all_shapes)
 
         self.observation_space = spaces.Box(0, 2, (14, 14), dtype=int)  # Nothing, us or them on every tile
         self.__set_all_possible_moves()
         self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
-        standard_size = Board(14, 14, "_")
-        self.blokus_game = BlokusGame(standard_size, All_Shapes)
         self.ai = Player("A", "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
         second = Player("B", "Computer_B", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
         ordering = [self.ai, second]
@@ -115,12 +116,11 @@ class BlokusEnv(gym.Env):
             with open(self.STATES_FILE) as json_file:
                 self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
         else:
-            self.all_possible_indexes_to_moves = self.ai.possible_moves(
-                [p for p in self.ai.pieces], self.blokus_game, no_restriction=True)
+            dummy = Player("", "", None, self.all_shapes, self.blokus_game)
+            self.all_possible_indexes_to_moves = dummy.possible_moves([p for p in self.all_shapes], no_restriction=True)
             data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
             with open(self.STATES_FILE, "w") as json_file:
                 json.dump(data, json_file)
-            self.blokus_game.start()
 
         self.all_possible_moves_to_indexes = {}
         for move in self.all_possible_indexes_to_moves:

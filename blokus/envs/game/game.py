@@ -10,11 +10,12 @@ class Game:
     of moves proposed to the game.
     """
 
-    def __init__(self, board, all_pieces):
+    def __init__(self, board, all_pieces, number_of_players=2):
         self.players = []
         self.rounds = 0
         self.board = board
         self.all_pieces = all_pieces
+        self.number_of_players = number_of_players
 
     def add_player(self, player):
         max_x = ((self.board).size[1] - 1)
@@ -23,6 +24,7 @@ class Game:
         player.add_pieces(self.all_pieces)
         player.start_corner(starts[len(self.players)])
         self.players.append(player)
+        self.number_of_players = max(self.number_of_players, len(self.players))
 
     def winner(self):
         """
