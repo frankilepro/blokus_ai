@@ -82,8 +82,8 @@ class Game:
             # interrupts the game if an invalid move is proposed
             else:
                 if current.name == "ai":
-                    raise Exception("Invalid move by " + current.name + ".")
-                    # raise InvalidMoveByAi()
+                    # raise Exception("Invalid move by " + current.name + ".")
+                    raise InvalidMoveByAi()
                 raise Exception("Invalid move by " + current.name + ".")
         else:
             pass
