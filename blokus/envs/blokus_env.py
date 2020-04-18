@@ -14,8 +14,8 @@ from gym import error, spaces, utils
 import os
 import gym
 import random
-import pyximport
-pyximport.install(pyimport=True)
+# import pyximport
+# pyximport.install(pyimport=True)
 
 
 class BlokusEnv(gym.Env):

@@ -3,13 +3,7 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize, build_ext
 
-# ext_modules = [
-#     Extension("blokus.envs",  ["blokus/envs/blokus_env.py"]),
-#     Extension("blokus.envs.shapes",  ["blokus/envs/shapes/shapes.py", "blokus/envs/shapes/shape.py"]),
-#     Extension("blokus.envs.players",  ["blokus/envs/players/player.py", "blokus/envs/players/random_player.py"]),
-#     Extension("blokus.envs.game",  ["blokus/envs/game/blokus_game.py",
-#                                     "blokus/envs/game/game.py", "blokus/envs/game/board.py"]),
-# ]
+
 ext_modules = [
     Extension("blokus.envs.blokus_env",  ["blokus/envs/blokus_env.py"]),
     Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
