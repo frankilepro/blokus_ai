@@ -12,7 +12,7 @@ class BlokusGame(Game):
         """
         Checks the conditions of the game
         to see if the game has been won yet
-        and returns "None" if the game has
+        and returns None if the game has
         not been won, and the name of the
         player if it has been won.
         """
@@ -20,7 +20,7 @@ class BlokusGame(Game):
         # http://stackoverflow.com/questions/1720421/merge-two-lists-in-python
         remains_moves = [p.remains_move for p in self.players]
         if True in remains_moves:
-            return "None"
+            return None
         else:
             cand = [(p.score, p.name) for p in self.players]
             return sorted(cand, reverse=True)[0][1]
@@ -30,21 +30,34 @@ class BlokusGame(Game):
         Uses functions from the board to see whether
         a player's proposed move is valid.
         """
-        if move.ID not in player.piece_ids:
+        if move.ID not in player.all_ids_to_move:
             return False
 
         move_points = move.points
+        if any(not self.board.in_bounds(pt) for pt in move_points):
+            return False
+        if self.board.overlap(move_points):
+            return False
+
         if self.rounds < len(self.players):
-            if ((False in [(self.board).in_bounds(pt) for pt in move_points])
-                or (self.board).overlap(move_points)
-                    or not (True in [(pt in player.corners) for pt in move_points])):
-                return(False)
-            else:
-                return(True)
-        elif ((False in [(self.board).in_bounds(pt) for pt in move_points])
-              or (self.board).overlap(move_points)
-                or (self.board).adj(player, move_points)
-                or not (self.board).corner(player, move_points)):
-            return(False)
+            if any(pt not in player.corners for pt in move_points):
+                return False
         else:
-            return(True)
+            if self.board.adj(player, move_points) or not self.board.corner(player, move_points):
+                return False
+
+        return True
+        # if self.rounds < len(self.players):
+        #     if ((False in [(self.board).in_bounds(pt) for pt in move_points])
+        #         or (self.board).overlap(move_points)
+        #             or not (True in [(pt in player.corners) for pt in move_points])):
+        #         return(False)
+        #     else:
+        #         return(True)
+        # elif ((False in [(self.board).in_bounds(pt) for pt in move_points])
+        #       or (self.board).overlap(move_points)
+        #         or (self.board).adj(player, move_points)
+        #         or not (self.board).corner(player, move_points)):
+        #     return(False)
+        # else:
+        #     return(True)

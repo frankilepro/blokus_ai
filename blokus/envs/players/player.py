@@ -45,18 +45,27 @@ class Player:
     def __init__(self, label, name, strategy, all_moves, game):
         self.label = label
         self.name = name
-        self.piece_ids = set()
+        # self.piece_ids = set()
         self.corners = set()
         self.strategy = strategy
         self.score = 0
-        self.all_moves = all_moves
         self.game = game
+        self.__set_all_ids_to_move(all_moves)
+
+    def __set_all_ids_to_move(self, all_moves):
+        self.all_ids_to_move = {}
+        for move in all_moves:
+            if move.ID not in self.all_ids_to_move:
+                self.all_ids_to_move[move.ID] = []
+            self.all_ids_to_move[move.ID].append(move)
 
     def add_pieces(self, pieces):
         """
         Gives a player the initial set of pieces.
         """
-        self.piece_ids = set(p.ID for p in pieces)
+        piece_ids = set(p.ID for p in pieces)
+        for missing_piece_id in self.all_ids_to_move.keys() - piece_ids:
+            self.all_ids_to_move.remove(missing_piece_id)
 
     def start_corner(self, p):
         """
@@ -69,7 +78,8 @@ class Player:
         Removes a given piece (Shape object) from
         the list of pieces a player has.
         """
-        self.piece_ids.remove(piece.ID)
+        # self.piece_ids.remove(piece.ID)
+        del self.all_ids_to_move[piece.ID]
 
     def update_player(self, placement, board):
         """
@@ -84,17 +94,19 @@ class Player:
 
     @property
     def remains_move(self):
-        for move in self.all_moves:
-            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move):
+        for moves in self.all_ids_to_move.values():
+            if any(self.game.valid_move(self, move) for move in moves):
                 return True
         return False
 
     def possible_moves_opt(self):
         placements = []
-        for move in self.all_moves:
-            if move.ID in self.piece_ids and not move.is_played and self.game.valid_move(self, move):
-                placements.append(move)
+        for moves in self.all_ids_to_move.values():
+            placements.extend(move for move in moves if self.game.valid_move(self, move))
         return placements
+
+    def possible_move_indexes(self):
+        return [move.idx for move in self.possible_moves_opt()]
 
     def possible_moves(self, pieces, no_restriction=False):
         """
@@ -134,7 +146,7 @@ class Player:
                 for num in range(try_out.size):
                     try_out.create(num, cr)
                     # And every possible flip.
-                    for fl in ["h", "None"]:
+                    for fl in ["h", None]:
                         try_out.flip(fl)
                         # And every possible orientation.
                         for rot in [90]*4:

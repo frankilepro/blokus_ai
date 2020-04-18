@@ -39,12 +39,11 @@ class Shape:
     """
 
     def __init__(self):
-        self.ID = "None"
+        self.ID = ""
         self.size = 1
         self.points = []
         self.corners = []
-        self.index = -1
-        self.is_played = False
+        self.idx = -1
 
     def create(self, num, pt):
         self.set_points(0, 0)
@@ -65,7 +64,7 @@ class Shape:
         shape that is rotated 0, 90, 180, of 270 degrees
         in a clockwise direction.
         """
-        assert(self.points != "None")
+        assert(self.points is not None)
         assert(degrees in [0, 90, 180, 270])
         self.degrees = degrees
 
@@ -79,8 +78,8 @@ class Shape:
         Returns the points that would be covered if the shape
         was flipped horizontally or vertically.
         """
-        assert(orientation == "h" or orientation == "None")
-        assert(self.points != "None")
+        assert(orientation == "h" or orientation is None)
+        assert(self.points is not None)
         self.orientation = orientation
 
         def flip_h(p):
@@ -96,7 +95,7 @@ class Shape:
             self.points = list(map(flip_h, self.points))
             self.corners = list(map(flip_h, self.corners))
         # flip the piece vertically
-        elif orientation == "None":
+        elif orientation is None:
             self.points = list(map(no_flip, self.points))
             self.corners = list(map(no_flip, self.corners))
         else:
@@ -118,12 +117,12 @@ class Shape:
         return vars(self)
 
     def __eq__(self, value):
-        return self.idx == value.idx  # TODO optimize
-        # return sorted(self.points) == sorted(value.points)
+        # return self.idx == value.idx  # TODO optimize
+        return sorted(self.points) == sorted(value.points)
 
     def __hash__(self):
-        return self.idx  # TODO optimize
-        # return hash(str(sorted(self.points)))
+        # return self.idx  # TODO optimize
+        return hash(str(sorted(self.points)))
 
     def __str__(self):
         return "\n".join([f"Id: {self.ID}", f"Size: {self.size}",
