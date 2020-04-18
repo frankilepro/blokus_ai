@@ -1,8 +1,6 @@
 import random
 import gym
 from blokus.envs.blokus_env import BlokusEnv
-# import pyximport
-# pyximport.install(pyimport=True)
 
 env = BlokusEnv()
 # env = gym.make("blokus:blokus-v0")  # Make sure to do: pip install -e blokus in root
