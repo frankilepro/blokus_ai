@@ -11,16 +11,14 @@ from Cython.Build import cythonize, build_ext
 #                                     "blokus/envs/game/game.py", "blokus/envs/game/board.py"]),
 # ]
 ext_modules = [
-    Extension("blokus",  [
-        "blokus/envs/blokus_env.py",
-        "blokus/envs/shapes/shapes.py",
-        "blokus/envs/shapes/shape.py",
-        "blokus/envs/players/player.py",
-        "blokus/envs/players/random_player.py",
-        "blokus/envs/game/blokus_game.py",
-        "blokus/envs/game/game.py",
-        "blokus/envs/game/board.py"
-    ]),
+    Extension("blokus.envs.blokus_env",  ["blokus/envs/blokus_env.py"]),
+    Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
+    Extension("blokus.envs.shapes.shape", ["blokus/envs/shapes/shape.py"]),
+    Extension("blokus.envs.players.player", ["blokus/envs/players/player.py"]),
+    Extension("blokus.envs.players.random_player", ["blokus/envs/players/random_player.py"]),
+    Extension("blokus.envs.game.blokus_game", ["blokus/envs/game/blokus_game.py"]),
+    Extension("blokus.envs.game.game", ["blokus/envs/game/game.py"]),
+    Extension("blokus.envs.game.board", ["blokus/envs/game/board.py"]),
 ]
 
 for e in ext_modules:
