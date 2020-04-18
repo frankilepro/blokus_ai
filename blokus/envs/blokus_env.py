@@ -1,4 +1,5 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
+# Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
 import random
 import gym
 import os

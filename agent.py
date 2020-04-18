@@ -194,8 +194,8 @@ class Agent:
 
 
 if __name__ == "__main__":
-    env = gym.make("FrozenLake-v0")
-    # env = gym.make("blokus:blokus-v0")
+    # env = gym.make("FrozenLake-v0")
+    env = gym.make("blokus:blokus-v0")
     memory_size = 1000
     num_episodes = 4000
     batch_size = 32
@@ -208,4 +208,3 @@ if __name__ == "__main__":
     agent.train()
     # for i in range(10):
     #     agent.test()
-
