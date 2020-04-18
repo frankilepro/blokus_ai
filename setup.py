@@ -13,7 +13,6 @@ setup(
     install_requires=[
         'gym',
         'numpy',
-        'json',
         'matplotlib'
     ],
     classifiers=[
