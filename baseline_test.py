@@ -5,12 +5,14 @@ from stable_baselines.common.policies import MlpPolicy
 # from stable_baselines.deepq.policies import MlpPolicy, LnMlpPolicy
 from stable_baselines.common import make_vec_env
 from stable_baselines import A2C, DQN
+# from blokus.envs.blokus_env import BlokusEnv
 
 # env = gym.make("blokus:blokus-v0")
 # check_env(env)
 # exit(1)
 
 # Parallel environments
+# env = make_vec_env(BlokusEnv(), n_envs=4)
 env = make_vec_env("blokus:blokus-v0", n_envs=4)
 
 print("starting training")
