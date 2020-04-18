@@ -1,19 +1,21 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
 # Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
-import random
-import gym
-import os
-from gym import error, spaces, utils
-from gym.utils import seeding
-import blokus.envs.shapes.shapes as shapes
-from blokus.envs.shapes.shape import Shape
-from blokus.envs.players.player import Player
-from blokus.envs.players.random_player import Random_Player
-from blokus.envs.game.board import Board
-from blokus.envs.game.blokus_game import BlokusGame
-from blokus.envs.game.game import InvalidMoveByAi
-import matplotlib.pyplot as plt
 import json
+import matplotlib.pyplot as plt
+from blokus.envs.game.game import InvalidMoveByAi
+from blokus.envs.game.blokus_game import BlokusGame
+from blokus.envs.game.board import Board
+from blokus.envs.players.random_player import Random_Player
+from blokus.envs.players.player import Player
+from blokus.envs.shapes.shape import Shape
+import blokus.envs.shapes.shapes as shapes
+from gym.utils import seeding
+from gym import error, spaces, utils
+import os
+import gym
+import random
+import pyximport
+pyximport.install(pyimport=True)
 
 
 class BlokusEnv(gym.Env):
