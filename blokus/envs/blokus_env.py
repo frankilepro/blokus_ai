@@ -116,6 +116,7 @@ class BlokusEnv(gym.Env):
             with open(self.STATES_FILE) as json_file:
                 self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
         else:
+            print("Building all possible state, this may take some time")
             dummy = Player("", "", None, self.all_shapes, self.blokus_game)
             self.all_possible_indexes_to_moves = dummy.possible_moves([p for p in self.all_shapes], no_restriction=True)
             data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
