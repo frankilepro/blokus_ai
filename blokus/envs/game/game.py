@@ -68,7 +68,6 @@ class Game:
                 self.rounds += 1
             # ensure that the proposed move is valid
             elif self.valid_move(current, proposal):
-                proposal.is_played = True
                 # update the board with the move
                 (self.board).update(current, proposal.points)
                 # let the player update itself accordingly
@@ -83,7 +82,8 @@ class Game:
             # interrupts the game if an invalid move is proposed
             else:
                 if current.name == "ai":
-                    raise InvalidMoveByAi()
+                    raise Exception("Invalid move by " + current.name + ".")
+                    # raise InvalidMoveByAi()
                 raise Exception("Invalid move by " + current.name + ".")
         else:
             pass

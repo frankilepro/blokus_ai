@@ -43,21 +43,21 @@ class BlokusEnv(gym.Env):
         for player in ordering:
             self.blokus_game.add_player(player)
 
+        while self.blokus_game.next_player() != self.ai:
+            self.__next_player_play()  # Let bots start
+
     def step(self, action_id):
         self.__set_ai_strategy(action_id)
 
-        done, reward = self.__get_done_reward()
+        done, reward = self.__next_player_play()  # Let ai play
         while not done and self.blokus_game.next_player() != self.ai:
             done, reward = self.__next_player_play()  # Let bots play
 
-        done, reward = self.__next_player_play()  # Let ai play
         if not self.ai.remains_move and not done:
             while not done:
                 done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
 
-        if reward == -1:
-            pass
-        return self.blokus_game.board.tensor, reward, done, {}
+        return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
 
     def __set_ai_strategy(self, action_id):
         self.ai.strategy = lambda player:\
@@ -100,9 +100,14 @@ class BlokusEnv(gym.Env):
         return random.choice(actions)
 
     def ai_possible_indexes(self):
-        possible_moves = self.ai.possible_moves_opt()
-        possible_indexes = [self.all_possible_moves_to_indexes[move] for move in possible_moves]
-        return possible_indexes
+        return self.ai.possible_move_indexes()
+
+    def ai_possible_mask(self):
+        indexes = self.ai.possible_move_indexes()
+        mask = [False] * len(self.all_possible_indexes_to_moves)
+        for index in indexes:
+            mask[index] = True
+        return mask
 
     def __set_all_possible_moves(self):
         if os.path.exists(self.STATES_FILE):

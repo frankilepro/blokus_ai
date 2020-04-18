@@ -49,7 +49,7 @@ class Board:
         Takes in a tuple and checks if it is in the bounds of
         the board.
         """
-        return (0 <= point[0] <= (self.size[1] - 1)) & (0 <= point[1] <= (self.size[0] - 1))
+        return (0 <= point[0] <= (self.size[1] - 1)) and (0 <= point[1] <= (self.size[0] - 1))
 
     def overlap(self, move):
         """
