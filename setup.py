@@ -4,11 +4,11 @@ from distutils.core import setup
 setup(
     name='blokus',
     packages=['blokus'],
-    version='0.11',
+    version='0.12',
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
     url='https://github.com/frankilepro/blokus-ai',
-    download_url='https://github.com/frankilepro/blokus-ai/archive/v0.11.tar.gz',
+    download_url='https://github.com/frankilepro/blokus-ai/archive/v0.12.tar.gz',
     keywords=['blokus', 'board game', 'block us'],
     install_requires=[
         'gym',
