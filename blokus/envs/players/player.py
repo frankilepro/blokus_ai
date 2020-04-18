@@ -134,7 +134,7 @@ class Player:
                 for num in range(try_out.size):
                     try_out.create(num, cr)
                     # And every possible flip.
-                    for fl in ["h", "None"]:
+                    for fl in ["h", None]:
                         try_out.flip(fl)
                         # And every possible orientation.
                         for rot in [90]*4:

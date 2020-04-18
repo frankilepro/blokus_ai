@@ -28,11 +28,11 @@ class Game:
         """
         Checks the conditions of the game
         to see if the game has been won yet
-        and returns "None" if the game has
+        and returns None if the game has
         not been won, and the name of the
         player if it has been won.
         """
-        return("None")
+        return None
 
     def valid_move(self, player, move):
         """
@@ -57,7 +57,7 @@ class Game:
 
         # if there is no winner, print out the current player's name and
         # let current player perform a move
-        if self.winner() == "None":
+        if self.winner() is None:
             current = self.players[0]
             # print("Current player: " + current.name)
             proposal = current.do_move()
@@ -86,4 +86,5 @@ class Game:
                     raise InvalidMoveByAi()
                 raise Exception("Invalid move by " + current.name + ".")
         else:
-            print("Game over! And the winner is: " + self.winner())
+            pass
+            # print("Game over! And the winner is: " + self.winner())

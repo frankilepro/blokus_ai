@@ -12,7 +12,7 @@ class BlokusGame(Game):
         """
         Checks the conditions of the game
         to see if the game has been won yet
-        and returns "None" if the game has
+        and returns None if the game has
         not been won, and the name of the
         player if it has been won.
         """
@@ -20,7 +20,7 @@ class BlokusGame(Game):
         # http://stackoverflow.com/questions/1720421/merge-two-lists-in-python
         remains_moves = [p.remains_move for p in self.players]
         if True in remains_moves:
-            return "None"
+            return None
         else:
             cand = [(p.score, p.name) for p in self.players]
             return sorted(cand, reverse=True)[0][1]

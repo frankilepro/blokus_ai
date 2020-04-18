@@ -39,7 +39,7 @@ class Shape:
     """
 
     def __init__(self):
-        self.ID = "None"
+        self.ID = ""
         self.size = 1
         self.points = []
         self.corners = []
@@ -65,7 +65,7 @@ class Shape:
         shape that is rotated 0, 90, 180, of 270 degrees
         in a clockwise direction.
         """
-        assert(self.points != "None")
+        assert(self.points is not None)
         assert(degrees in [0, 90, 180, 270])
         self.degrees = degrees
 
@@ -79,8 +79,8 @@ class Shape:
         Returns the points that would be covered if the shape
         was flipped horizontally or vertically.
         """
-        assert(orientation == "h" or orientation == "None")
-        assert(self.points != "None")
+        assert(orientation == "h" or orientation is None)
+        assert(self.points is not None)
         self.orientation = orientation
 
         def flip_h(p):
@@ -96,7 +96,7 @@ class Shape:
             self.points = list(map(flip_h, self.points))
             self.corners = list(map(flip_h, self.corners))
         # flip the piece vertically
-        elif orientation == "None":
+        elif orientation is None:
             self.points = list(map(no_flip, self.points))
             self.corners = list(map(no_flip, self.corners))
         else:

@@ -54,6 +54,9 @@ class BlokusEnv(gym.Env):
         if not self.ai.remains_move and not done:
             while not done:
                 done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
+
+        if reward == -1:
+            pass
         return self.blokus_game.board.tensor, reward, done, {}
 
     def __set_ai_strategy(self, action_id):
@@ -72,7 +75,7 @@ class BlokusEnv(gym.Env):
 
     def __get_done_reward(self):
         winner = self.blokus_game.winner()
-        done = winner != "None"
+        done = winner is not None
         if done:
             if winner == "ai":
                 reward = self.rewards['won']
