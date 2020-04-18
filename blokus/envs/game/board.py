@@ -23,7 +23,7 @@ class Board:
 
     @property
     def tensor(self):
-        return self._tensor.numpy()
+        return self._tensor
 
     # @tensor.setter
     # def tensor(self, value):

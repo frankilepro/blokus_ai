@@ -127,10 +127,10 @@ class DistributionalNetwork(nn.Module):
                                     nn.ReLU(),
                                     nn.Linear(24, self.out_dim * self.num_bins))
 
-    def action_distr(self, x):
+    def action_distr(self, x, env):
         x = self.layers(x)
-        x = torch.reshape(x, (self.out_dim, self.num_bins))
+        x = x.reshape(-1, self.out_dim, self.num_bins)
         return nn.Softmax(dim=-1)(x).clamp(1e-5)
 
-    def forward(self, x):
-        return torch.sum(self.action_distr(x) * self.v_range, dim=-1)
+    def forward(self, x, env):
+        return torch.sum(self.action_distr(x, env) * self.v_range, dim=-1)

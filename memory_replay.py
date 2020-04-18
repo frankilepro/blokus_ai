@@ -1,6 +1,7 @@
 import random
 from collections import deque
 
+import torch
 import numpy as np
 from segment_tree import SegmentTree
 
@@ -18,7 +19,27 @@ class ReplayMemory:
         self.memory.append((state, action, next_state, reward, done))
 
     def random_batch(self):
-        return random.sample(self.memory, self.batch_size)
+        random_batch = random.sample(self.memory, self.batch_size)
+        states = []
+        actions = []
+        next_states = []
+        rewards = []
+        dones = []
+        for b in random_batch:
+            state, action, next_state, reward, done = b
+            states.append(state)
+            actions.append(action)
+            next_states.append(next_state)
+            rewards.append(reward)
+            dones.append(done)
+        states = torch.cat(states).reshape(self.batch_size, -1)
+        actions = torch.tensor(actions).unsqueeze(1).to(states.device)
+        next_states = torch.cat(next_states).reshape(self.batch_size, -1)
+        rewards = torch.tensor(rewards).unsqueeze(1).to(states.device)
+        dones = torch.tensor(dones).unsqueeze(1).to(states.device)
+        return states, actions, next_states, rewards, dones
+
+
 
 
 # TODO not finishedparame
