@@ -34,6 +34,7 @@ class Agent:
                  learning_rate,
                  num_episodes,
                  model_filename,
+                 nsteps=None,
                  eps=1,
                  min_eps=0.01,
                  eps_decay=0.005,
@@ -47,15 +48,16 @@ class Agent:
         self.num_episodes = num_episodes
         self.gamma = gamma
         self.batch_size = batch_size
-        self.memory = ReplayMemory(memory_size, self.batch_size)
+        self.nsteps = nsteps
+        self.memory = ReplayMemory(memory_size, self.batch_size, self.gamma, self.nsteps)
         self.eps = eps
         self.min_eps = min_eps
         self.eps_decay = eps_decay
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        # self.obs_size = env.observation_space.n
+        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        self.obs_size = env.observation_space.n
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
@@ -88,8 +90,8 @@ class Agent:
             next_action = self.env.action_space.sample()
         # Greedy choice (exploitation)
         else:
-            possible_moves = [self.env.ai_possible_indexes()]
-            # possible_moves = [[0, 1, 2, 3]]
+            # possible_moves = [self.env.ai_possible_indexes()]
+            possible_moves = [[0, 1, 2, 3]]
             next_action = int(self.model(state.unsqueeze(0), possible_moves).argmax().detach().cpu())
 
         return next_action
@@ -155,13 +157,13 @@ class Agent:
         state, action, next_state, reward, done, possible_move = self.memory.random_batch()
         self.update(reward, done, next_state, state, action, possible_move)
 
-    # def ohe(self, state):
-    #     ohe_state = torch.zeros(self.obs_size).to(self.device)
-    #     ohe_state[state] = 1
-    #     return ohe_state
-
     def ohe(self, state):
-        return state.view(-1).type(torch.float32).to(self.device)
+        ohe_state = torch.zeros(self.obs_size).to(self.device)
+        ohe_state[state] = 1
+        return ohe_state
+
+    # def ohe(self, state):
+    #     return state.view(-1).type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
@@ -172,13 +174,16 @@ class Agent:
             state = self.ohe(self.env.reset())
             while not done:
                 action = self.eps_greedy_action(state)
-                next_state, reward, done, info = self.env.step(action)
-                possible_move = self.env.ai_possible_indexes()
-                # possible_move = [0, 1, 2, 3]
+                next_state, reward, done, _ = self.env.step(action)
+                # possible_move = self.env.ai_possible_indexes()
+                possible_move = [0, 1, 2, 3]
                 # env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
-                self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
+                if self.nsteps is not None:
+                    self.memory.add_nsteps_memory(state, action, next_state, reward, done, possible_move)
+                else:
+                    self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
 
                 rewards_lst.append(rewards)
                 state = next_state
@@ -218,18 +223,18 @@ class Agent:
 
 
 if __name__ == "__main__":
-    # env = gym.make("FrozenLake-v0")
-    env = gym.make("blokus:blokus-v0")
+    env = gym.make("FrozenLake-v0")
+    # env = gym.make("blokus:blokus-v0")
     memory_size = 1000
-    num_episodes = 4000
+    num_episodes = 10000
 
     batch_size = 32
     # gamma = 0.999
     learning_rate = 0.001
     model_filename = "blokus"
 
-    dist_params = {"num_bins": 51, "v_min": 0, "v_max": 1}
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False,
+    dist_params = {"num_bins": 51, "v_min": 0.0, "v_max": 1.0}
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, nsteps=3, is_double=False,
                   is_dueling=False, is_noisy=False, is_distributional=False, distr_params=dist_params)
     agent.train()
     # for i in range(10):
