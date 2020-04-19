@@ -23,6 +23,7 @@ class DQN(nn.Module):
         # return nn.Softmax(1)(x)
         return self.custom_softmax(x, possible_moves)
 
+
 class LegalSoftmax(nn.Module):
     """
     Custom layer to consider only valid moves
@@ -36,8 +37,9 @@ class LegalSoftmax(nn.Module):
         actions_tensor = torch.zeros(x.shape).to(x.device)
         batch_size = x.shape[0]
         for i in range(batch_size):
-            actions_tensor[i, legal_moves[i]] = 1
+            actions_tensor[i, legal_moves[i]] = 1.0
         filtered_actions = x * actions_tensor
+        filtered_actions[filtered_actions == 0] = -1000
         return F.softmax(filtered_actions, dim=1)
 
 

@@ -37,7 +37,7 @@ class Agent:
                  nsteps=None,
                  eps=1,
                  min_eps=0.01,
-                 eps_decay=0.005,
+                 eps_decay=0.00005,
                  gamma=0.9,
                  is_double=False,
                  is_dueling=False,
@@ -62,8 +62,8 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        self.obs_size = env.observation_space.n
+        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        # self.obs_size = env.observation_space.n
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
@@ -97,8 +97,8 @@ class Agent:
             next_action = self.env.action_space.sample()
         # Greedy choice (exploitation)
         else:
-            # possible_moves = [self.env.ai_possible_indexes()]
-            possible_moves = [[0, 1, 2, 3]]
+            possible_moves = [self.env.ai_possible_indexes()]
+            # possible_moves = [[0, 1, 2, 3]]
             next_action = int(self.model(state.unsqueeze(0), possible_moves).argmax().detach().cpu())
 
         return next_action
@@ -175,13 +175,13 @@ class Agent:
             state, action, next_state, reward, done, possible_move = self.memory.get_random_batch()
         self.update(reward, done, next_state, state, action, possible_move, idx, weight)
 
-    def ohe(self, state):
-        ohe_state = torch.zeros(self.obs_size).to(self.device)
-        ohe_state[state] = 1
-        return ohe_state
-
     # def ohe(self, state):
-    #     return state.view(-1).type(torch.float32).to(self.device)
+    #     ohe_state = torch.zeros(self.obs_size).to(self.device)
+    #     ohe_state[state] = 1
+    #     return ohe_state
+
+    def ohe(self, state):
+        return state.view(-1).type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
@@ -193,9 +193,9 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, _ = self.env.step(action)
-                # possible_move = self.env.ai_possible_indexes()
-                possible_move = [0, 1, 2, 3]
-                # env.render("human")
+                possible_move = self.env.ai_possible_indexes()
+                # possible_move = [0, 1, 2, 3]
+                env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
                 if self.nsteps is not None:
@@ -246,7 +246,7 @@ class Agent:
 
 if __name__ == "__main__":
     env = gym.make("FrozenLake-v0")
-    # env = gym.make("blokus:blokus-v0")
+    # env = gym.make("blokus:blokus-duo-v0")
     memory_size = 1000
     num_episodes = 10000
 
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     prioritized_params = {"a": 0.2, "b": 0.6, "eps": 1e-5}
     agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, nsteps=None,
                   is_double=False, is_dueling=False, is_noisy=False, is_distributional=False, distr_params=dist_params,
-                  is_prioritized=True, prioritized_params=prioritized_params)
+                  is_prioritized=False, prioritized_params=prioritized_params)
     agent.train()
     # for i in range(10):
     #     agent.test()
