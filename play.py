@@ -4,11 +4,11 @@ from blokus.envs.blokus_env import BlokusEnv
 
 if __name__ == "__main__":
     # env = BlokusEnv()
-    env = gym.make("blokus:blokus-hard-v0")  # Make sure to do: pip install -e blokus in root
+    env = gym.make("blokus:blokus-simple-v0")  # Make sure to do: pip install -e blokus in root
     observation = env.reset()
-    for _ in range(10):
+    for _ in range(1000000):
         while True:
-            # env.render("human")
+            env.render("human")
             action = env.action_space.sample()
 
             observation, reward, done, info = env.step(action)

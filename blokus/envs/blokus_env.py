@@ -18,7 +18,6 @@ import os
 import cython
 import gym
 import random
-import time
 
 
 def possible_moves_func(dummy, board_size, pieces):
@@ -140,7 +139,6 @@ class BlokusEnv(gym.Env):
             dummy = Player("", "", None, self.all_shapes, self.blokus_game)
 
             number_of_cores_to_use = mp.cpu_count() // 2
-            start = time.time()
             with mp.Pool(number_of_cores_to_use) as pool:
                 self.all_possible_indexes_to_moves = pool.map(
                     partial(possible_moves_func, dummy, self.BOARD_SIZE), [[p] for p in self.all_shapes])

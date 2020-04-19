@@ -40,7 +40,7 @@ class BlokusGame(Game):
             return False
 
         if self.rounds < self.number_of_players:
-            if any(pt not in player.corners for pt in move_points):
+            if not any(pt in player.corners for pt in move_points):
                 return False
         else:
             if self.board.adj(player, move_points) or not self.board.corner(player, move_points):
