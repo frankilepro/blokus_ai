@@ -15,13 +15,13 @@ class DQN(nn.Module):
                                     nn.Linear(24, 24),
                                     nn.ReLU(),
                                     nn.Linear(24, out_dim))
-        # Softamx only on valid moves
+        # Softmax only on valid moves
         self.custom_softmax = LegalSoftmax()
 
-    def forward(self, x, env):
+    def forward(self, x, possible_moves):
         x = self.layers(x)
-        return self.custom_softmax(x, env)
-
+        # return nn.Softmax(1)(x)
+        return self.custom_softmax(x, possible_moves)
 
 class LegalSoftmax(nn.Module):
     """
@@ -31,13 +31,14 @@ class LegalSoftmax(nn.Module):
     def __init__(self):
         super(LegalSoftmax, self).__init__()
 
-    def forward(self, x, env):
-        # legal_moves = env.ai_possible_indexes()
-        legal_moves = [0, 1, 2, 3]
+    def forward(self, x, possible_moves):
+        legal_moves = possible_moves
         actions_tensor = torch.zeros(x.shape).to(x.device)
-        actions_tensor[legal_moves] = 1
+        batch_size = x.shape[0]
+        for i in range(batch_size):
+            actions_tensor[i, legal_moves[i]] = 1
         filtered_actions = x * actions_tensor
-        return F.softmax(filtered_actions, dim=0)
+        return F.softmax(filtered_actions, dim=1)
 
 
 class DuelingNetwork(nn.Module):
@@ -119,16 +120,18 @@ class DistributionalNetwork(nn.Module):
         super(DistributionalNetwork, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        self.num_bins = distr_params.num_bins
-        self.v_range = distr_params.v_range
+        self.num_bins = distr_params["num_bins"]
+        self.v_range = distr_params["v_range"]
         self.layers = nn.Sequential(nn.Linear(in_dim, 24),
                                     nn.ReLU(),
                                     nn.Linear(24, 24),
                                     nn.ReLU(),
                                     nn.Linear(24, self.out_dim * self.num_bins))
 
-    def forward(self, x):
+    def action_distr(self, x, env):
         x = self.layers(x)
         x = x.reshape(-1, self.out_dim, self.num_bins)
-        x = nn.Softmax(dim=2)(x).clamp(1e-5)
-        return (x * self.v_range).sum(dim=2)
+        return nn.Softmax(dim=-1)(x).clamp(1e-5)
+
+    def forward(self, x, env):
+        return torch.sum(self.action_distr(x, env) * self.v_range, dim=-1)
