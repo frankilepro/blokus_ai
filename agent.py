@@ -173,8 +173,8 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, info = self.env.step(action)
-                # possible_move = self.env.ai_possible_indexes()
-                possible_move = [0, 1, 2, 3]
+                possible_move = self.env.ai_possible_indexes()
+                # possible_move = [0, 1, 2, 3]
                 # env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
