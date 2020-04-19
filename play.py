@@ -4,7 +4,7 @@ from blokus.envs.blokus_env import BlokusEnv
 
 if __name__ == "__main__":
     # env = BlokusEnv()
-    env = gym.make("blokus:blokus-simple-v0")  # Make sure to do: pip install -e blokus in root
+    env = gym.make("blokus:blokus-hard-v0")  # Make sure to do: pip install -e blokus in root
     observation = env.reset()
     for _ in range(10):
         while True:
