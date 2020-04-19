@@ -220,8 +220,9 @@ class Agent:
 if __name__ == "__main__":
     # env = gym.make("FrozenLake-v0")
     env = gym.make("blokus:blokus-v0")
-    memory_size = 100
-    num_episodes = 10000
+    memory_size = 1000
+    num_episodes = 4000
+
     batch_size = 32
     # gamma = 0.999
     learning_rate = 0.001

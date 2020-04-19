@@ -39,7 +39,7 @@ class BlokusGame(Game):
         if self.board.overlap(move_points):
             return False
 
-        if self.rounds < len(self.players):
+        if self.rounds < self.number_of_players:
             if any(pt not in player.corners for pt in move_points):
                 return False
         else:
@@ -47,17 +47,3 @@ class BlokusGame(Game):
                 return False
 
         return True
-        # if self.rounds < len(self.players):
-        #     if ((False in [(self.board).in_bounds(pt) for pt in move_points])
-        #         or (self.board).overlap(move_points)
-        #             or not (True in [(pt in player.corners) for pt in move_points])):
-        #         return(False)
-        #     else:
-        #         return(True)
-        # elif ((False in [(self.board).in_bounds(pt) for pt in move_points])
-        #       or (self.board).overlap(move_points)
-        #         or (self.board).adj(player, move_points)
-        #         or not (self.board).corner(player, move_points)):
-        #     return(False)
-        # else:
-        #     return(True)

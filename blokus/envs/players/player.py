@@ -152,7 +152,7 @@ class Player:
                         for rot in [90]*4:
                             try_out.rotate(rot)
                             candidate = copy.deepcopy(try_out)
-                            if self.game.valid_move(self, candidate.points):
+                            if self.game.valid_move(self, candidate):
                                 if not (set(candidate.points) in visited):
                                     placements.append(candidate)
                                     visited.append(set(candidate.points))

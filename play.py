@@ -1,8 +1,9 @@
-import gym
 import random
+import gym
+from blokus.envs.blokus_env import BlokusEnv
 
-
-env = gym.make("blokus:blokus-v0")  # Make sure to do: pip install -e blokus in root
+env = BlokusEnv()
+# env = gym.make("blokus:blokus-v0")  # Make sure to do: pip install -e blokus in root
 observation = env.reset()
 for _ in range(1000):
     # while True:
