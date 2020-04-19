@@ -26,7 +26,7 @@ class Game:
         self.players.append(player)
         self.number_of_players = max(self.number_of_players, len(self.players))
 
-    def winner(self):
+    def winners(self):
         """
         Checks the conditions of the game
         to see if the game has been won yet
@@ -59,7 +59,7 @@ class Game:
 
         # if there is no winner, print out the current player's name and
         # let current player perform a move
-        if self.winner() is None:
+        if self.winners() is None:
             current = self.players[0]
             # print("Current player: " + current.name)
             proposal = current.do_move()
@@ -89,4 +89,4 @@ class Game:
                 raise Exception("Invalid move by " + current.name + ".")
         else:
             pass
-            # print("Game over! And the winner is: " + self.winner())
+            # print("Game over! And the winner is: " + self.winners())

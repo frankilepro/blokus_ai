@@ -27,7 +27,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-    rewards = {'default': 0, 'won': 1, 'invalid': -1, 'lost': -2}
+    rewards = {'won': 2, 'tie-won': 0, 'default': 0, 'invalid': -1, 'lost': -2}
     STATES_FOLDER = "states"
 
     # Customization available by base classes
@@ -92,15 +92,18 @@ class BlokusEnv(gym.Env):
             return done, min(self.rewards['invalid'], reward)
 
     def __get_done_reward(self):
-        winner = self.blokus_game.winner()
-        done = winner is not None
+        winners = self.blokus_game.winners()
+        done = winners is not None
         if done:
-            if winner == "ai":
-                reward = self.rewards['won']
+            if "ai" in winners:
+                if len(winners) == 1:
+                    reward = self.rewards['won']
+                else:
+                    reward = self.rewards['tie-won']
             else:
                 reward = self.rewards['lost']
         else:
-            reward = 0
+            reward = self.rewards['default']
         return done, reward
 
     def reset(self):

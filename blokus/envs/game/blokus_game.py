@@ -8,7 +8,7 @@ class BlokusGame(Game):
     of rounds that have been played.
     """
 
-    def winner(self):
+    def winners(self):
         """
         Checks the conditions of the game
         to see if the game has been won yet
@@ -16,14 +16,18 @@ class BlokusGame(Game):
         not been won, and the name of the
         player if it has been won.
         """
-        # Credit to Dariusz Walczak for inspiration.
-        # http://stackoverflow.com/questions/1720421/merge-two-lists-in-python
-        remains_moves = [p.remains_move for p in self.players]
-        if True in remains_moves:
+        if any(p.remains_move for p in self.players):
             return None
         else:
-            cand = [(p.score, p.name) for p in self.players]
-            return sorted(cand, reverse=True)[0][1]
+            winners = []
+            winner_score = 0
+            for player in self.players:
+                if player.score > winner_score:
+                    winners = [player.name]
+                    winner_score = winner_score
+                elif player.score == winner_score:
+                    winners.append(player.name)
+            return winners
 
     def valid_move(self, player, move):
         """
