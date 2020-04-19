@@ -19,6 +19,7 @@ import random
 class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     rewards = {'default': 0, 'won': 1, 'invalid': -1, 'lost': -2}
+    STATES_FOLDER = "states"
 
     # Customization available by base classes
     NUMBER_OF_PLAYERS = 4
@@ -102,8 +103,6 @@ class BlokusEnv(gym.Env):
 
     def ai_sample_possible_index(self):
         return self.ai.sample_move_idx()
-        # actions = self.ai_possible_indexes()
-        # return random.choice(actions)
 
     def ai_possible_indexes(self):
         return self.ai.possible_move_indexes()
@@ -119,8 +118,10 @@ class BlokusEnv(gym.Env):
         if self.all_possible_indexes_to_moves is not None:
             return
 
-        if os.path.exists(self.STATES_FILE):
-            with open(self.STATES_FILE) as json_file:
+        state_file = os.path.join(self.STATES_FOLDER, self.STATES_FILE)
+        print(state_file)
+        if os.path.exists(state_file):
+            with open(state_file) as json_file:
                 self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
         else:
             print("Building all possible state, this may take some time")
@@ -128,9 +129,10 @@ class BlokusEnv(gym.Env):
             self.all_possible_indexes_to_moves = dummy.possible_moves(
                 [p for p in self.all_shapes], no_restriction=True, board_size=self.BOARD_SIZE)
             data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
-            with open(self.STATES_FILE, "w") as json_file:
+            os.makedirs(self.STATES_FOLDER, exist_ok=True)
+            with open(state_file, "w") as json_file:
                 json.dump(data, json_file)
-            print(f"{self.STATES_FILE} has been saved")
+            print(f"{state_file} has been saved")
 
         self.all_possible_moves_to_indexes = {}
         for move in self.all_possible_indexes_to_moves:
