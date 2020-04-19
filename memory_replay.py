@@ -3,11 +3,11 @@ from collections import deque
 
 import torch
 import numpy as np
-from segment_tree import SegmentTree
+from segment_tree import SegmentTree, MinSegmentTree, SumSegmentTree
 
 
 class ReplayMemory:
-    def __init__(self, max_size, batch_size, gamma, nsteps=None):
+    def __init__(self, max_size, batch_size, gamma=0.9, nsteps=None):
         self.max_size = max_size
         self.batch_size = batch_size
         self.memory = deque([], maxlen=max_size)
@@ -37,7 +37,7 @@ class ReplayMemory:
         possible_move = self.nsteps_buffer[0][-1]
         self.add_to_memory(state, action, next_state, nsteps_reward, done, possible_move)
 
-    def random_batch(self):
+    def get_random_batch(self):
         random_batch = random.sample(self.memory, self.batch_size)
         return self.create_batch(random_batch)
 
@@ -64,23 +64,58 @@ class ReplayMemory:
         return states, actions, next_states, rewards, dones, possible_moves
 
 
-# TODO not finishedparame
+# Inspired from https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/03.per.ipynb
 class PrioritizedExperienceReplay(ReplayMemory):
-    def __init__(self, max_size, batch_size, tree_capacity, a):
+    def __init__(self, max_size, batch_size, prioritized_params):
         super(PrioritizedExperienceReplay, self).__init__(max_size, batch_size)
-        self.tree = SegmentTree(tree_capacity)
-        self.a = a
+        self.max_size = max_size
+        self.tree_capacity = 1
+        while self.tree_capacity < self.max_size:
+            # Data structure requires capacity to be a power of 2
+            self.tree_capacity *= 2
+        self.sum_tree = SumSegmentTree(self.tree_capacity)
+        self.min_tree = MinSegmentTree(self.tree_capacity)
+        self.a = prioritized_params["a"]
+        self.b = prioritized_params["b"]
+        self.tree_idx = 0
+        self.max_priority = 1.0
 
-    def add_to_memory(self, state, action, next_state, reward, done):
-        super().add_to_memory(state, action, next_state, reward, done)
+    def add_to_memory(self, state, action, next_state, reward, done, possible_move):
+        super().add_to_memory(state, action, next_state, reward, done, possible_move)
+        self.sum_tree[self.tree_idx] = self.max_priority ** self.a
+        self.min_tree[self.tree_idx] = self.max_priority ** self.a
+        self.tree_idx = (self.tree_idx + 1) % self.max_size
 
-    def get_priority(self, error):
-        eps = 0.001
-        return (np.abs(error) + eps) ** self.a
+    def update_priorities(self, indices, priorities):
+        eps = 1e-5
+        for i, priority in zip(indices, priorities):
+            self.sum_tree[i] = (priority + eps) ** self.a
+            self.min_tree[i] = (priority + eps) ** self.a
+            self.max_priority = max(self.max_priority, priority + eps)
 
-    def sample_batch(self):
-        segment = self.tree.query(0, len(self) - 1, 'sum') / self.batch_size
+    def sample_uniform(self):
+        segment = self.sum_tree.sum(0, len(self) - 1) / self.batch_size
+        indices = []
         for i in range(self.batch_size):
             a = segment * i
             b = segment * (i + 1)
-            s = random.uniform(a, b)
+            mass = random.uniform(a, b)
+            idx = self.sum_tree.find_prefixsum_idx(mass)
+            indices.append(idx)
+        return indices
+
+    def update_beta(self, beta):
+        self.b = beta
+
+    def get_prioritized_sample(self):
+        indices = self.sample_uniform()
+        weights = []
+        p_min = self.min_tree.min() / self.sum_tree.sum()
+        max_weight = (p_min * len(self)) ** (-self.b)
+        batch = []
+        for i in indices:
+            p = self.sum_tree[i] / self.sum_tree.sum()
+            weights.append((p * len(self)) ** (-self.b) / max_weight)
+            batch.append(self.memory[i])
+        states, actions, next_states, rewards, dones, possible_moves = self.create_batch(batch)
+        return states, actions, next_states, rewards, dones, possible_moves, indices, torch.tensor(weights)
