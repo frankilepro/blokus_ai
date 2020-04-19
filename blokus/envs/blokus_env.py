@@ -1,6 +1,9 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
 # Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
 import json
+import multiprocessing as mp
+import itertools
+from functools import partial
 import matplotlib.pyplot as plt
 from blokus.envs.game.game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
@@ -14,6 +17,12 @@ from gym import error, spaces, utils
 import os
 import gym
 import random
+import time
+
+
+def possible_moves_func(dummy, board_size, pieces):
+    # This needs to be there because it can't be pickled
+    return dummy.possible_moves(pieces, no_restriction=True, board_size=board_size)
 
 
 class BlokusEnv(gym.Env):
@@ -119,21 +128,22 @@ class BlokusEnv(gym.Env):
             return
 
         state_file = os.path.join(self.STATES_FOLDER, self.STATES_FILE)
-        print(state_file)
         if os.path.exists(state_file):
             with open(state_file) as json_file:
                 self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
         else:
-            print("Building all possible state, this may take some time")
+            print("Building all possible states, this may take some time")
             dummy = Player("", "", None, self.all_shapes, self.blokus_game)
-            self.all_possible_indexes_to_moves = dummy.possible_moves(
-                [p for p in self.all_shapes], no_restriction=True, board_size=self.BOARD_SIZE)
+
+            number_of_cores_to_use = mp.cpu_count() // 2
+            start = time.time()
+            with mp.Pool(number_of_cores_to_use) as pool:
+                self.all_possible_indexes_to_moves = pool.map(
+                    partial(possible_moves_func, dummy, self.BOARD_SIZE), [[p] for p in self.all_shapes])
+            self.all_possible_indexes_to_moves = list(itertools.chain.from_iterable(self.all_possible_indexes_to_moves))
             data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
+
             os.makedirs(self.STATES_FOLDER, exist_ok=True)
             with open(state_file, "w") as json_file:
                 json.dump(data, json_file)
             print(f"{state_file} has been saved")
-
-        self.all_possible_moves_to_indexes = {}
-        for move in self.all_possible_indexes_to_moves:
-            self.all_possible_moves_to_indexes[move] = move.idx
