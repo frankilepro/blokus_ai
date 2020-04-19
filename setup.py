@@ -1,11 +1,12 @@
 from distutils.core import setup
-# from setuptools import setup, find_packages
 from distutils.extension import Extension
 from Cython.Build import cythonize, build_ext
 
 
 ext_modules = [
     Extension("blokus.envs.blokus_env",  ["blokus/envs/blokus_env.py"]),
+    Extension("blokus.envs.blokus_simple_env",  ["blokus/envs/blokus_simple_env.py"]),
+    Extension("blokus.envs.blokus_duo_env",  ["blokus/envs/blokus_duo_env.py"]),
     Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
     Extension("blokus.envs.shapes.shape", ["blokus/envs/shapes/shape.py"]),
     Extension("blokus.envs.players.player", ["blokus/envs/players/player.py"]),

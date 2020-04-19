@@ -34,14 +34,14 @@ class Board:
         Takes in a Player object and a move as a
         list of integer tuples that represent the piece.
         """
-        if player.label not in self.player_ids:
-            self.player_ids[player.label] = len(self.player_ids) + 1  # since 0 represents empty
+        if player.index not in self.player_ids:
+            self.player_ids[player.index] = len(self.player_ids) + 1  # since 0 represents empty
 
-        id = self.player_ids[player.label]
+        id = self.player_ids[player.index]
         for row in range(len(self.state)):
             for col in range(len(self.state[1])):
                 if (col, row) in move:
-                    self.state[row][col] = player.label
+                    self.state[row][col] = player.index
                     self._tensor[row][col] = id
 
     def in_bounds(self, point):
@@ -70,13 +70,13 @@ class Board:
         validates = []
         for (i, j) in move:
             if self.in_bounds((j + 1, i + 1)):
-                validates.append((self.state[j + 1][i + 1] == player.label))
+                validates.append((self.state[j + 1][i + 1] == player.index))
             if self.in_bounds((j - 1, i - 1)):
-                validates.append((self.state[j - 1][i - 1] == player.label))
+                validates.append((self.state[j - 1][i - 1] == player.index))
             if self.in_bounds((j - 1, i + 1)):
-                validates.append((self.state[j - 1][i + 1] == player.label))
+                validates.append((self.state[j - 1][i + 1] == player.index))
             if self.in_bounds((j + 1, i - 1)):
-                validates.append((self.state[j + 1][i - 1] == player.label))
+                validates.append((self.state[j + 1][i - 1] == player.index))
         if True in validates:
             return True
         else:
@@ -91,13 +91,13 @@ class Board:
         validates = []
         for (i, j) in move:
             if self.in_bounds((j, i + 1)):
-                validates.append((self.state[j][i + 1] == player.label))
+                validates.append((self.state[j][i + 1] == player.index))
             if self.in_bounds((j, i - 1)):
-                validates.append((self.state[j][i - 1] == player.label))
+                validates.append((self.state[j][i - 1] == player.index))
             if self.in_bounds((j - 1, i)):
-                validates.append((self.state[j - 1][i] == player.label))
+                validates.append((self.state[j - 1][i] == player.index))
             if self.in_bounds((j + 1, i)):
-                validates.append((self.state[j + 1][i] == player.label))
+                validates.append((self.state[j + 1][i] == player.index))
         if True in validates:
             return True
         else:
@@ -142,7 +142,7 @@ class Board:
                     points[id] = []
                 points[id].append((x[0], (self.size[0] - 1) - y[0]))
 
-        colors = {"A": "red", "B": "blue", "C": "yellow", "D": "green", "_": "lightgrey"}
+        colors = {0: "red", 1: "blue", 2: "yellow", 3: "green", "_": "lightgrey"}
         ax = plt.subplot(xlim=(0, self.size[0]), ylim=(0, self.size[1]))
         for i in range(self.size[0] + 1):
             for j in range(self.size[1] + 1):

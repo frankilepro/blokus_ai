@@ -1,6 +1,7 @@
 import copy
 
 import numpy as np
+import random
 
 
 def eval_move(piece, player, game, weights):
@@ -19,7 +20,7 @@ def eval_move(piece, player, game, weights):
     # create a copy of the players in the game
     test_players = copy.deepcopy(game.players)
     # create a list of the opponents in the game
-    opponents = [opponent for opponent in test_players if opponent.label != player.label]
+    opponents = [opponent for opponent in test_players if opponent.index != player.index]
     # create a copy of the board
     test_board = copy.deepcopy(board)
     # update the copy of the board with the Piece placement
@@ -42,8 +43,8 @@ def eval_move(piece, player, game, weights):
 
 
 class Player:
-    def __init__(self, label, name, strategy, all_moves, game):
-        self.label = label
+    def __init__(self, index, name, strategy, all_moves, game):
+        self.index = index
         self.name = name
         # self.piece_ids = set()
         self.corners = set()
@@ -58,6 +59,11 @@ class Player:
             if move.ID not in self.all_ids_to_move:
                 self.all_ids_to_move[move.ID] = []
             self.all_ids_to_move[move.ID].append(move)
+
+        # For performance issue, we shuffle first, then we look "in order" to find the first move
+        # in casses when we want to sample a random move
+        for key in self.all_ids_to_move.keys():
+            random.shuffle(self.all_ids_to_move[key])
 
     def add_pieces(self, pieces):
         """
@@ -92,6 +98,20 @@ class Player:
             if (board.in_bounds(c) and (not board.overlap([c]))):
                 (self.corners).add(c)
 
+    def sample_move(self):
+        keys = list(self.all_ids_to_move.keys())
+        random.shuffle(keys)
+        nb = 0
+        for key in keys:
+            nb += 1
+            for move in self.all_ids_to_move[key]:
+                if self.game.valid_move(self, move):
+                    return move
+        return None
+
+    def sample_move_idx(self):
+        return self.sample_move().idx
+
     @property
     def remains_move(self):
         for moves in self.all_ids_to_move.values():
@@ -108,7 +128,7 @@ class Player:
     def possible_move_indexes(self):
         return [move.idx for move in self.possible_moves_opt()]
 
-    def possible_moves(self, pieces, no_restriction=False):
+    def possible_moves(self, pieces, no_restriction=False, board_size=14):
         """
         Returns a unique list of placements, i.e. Shape objects
         with a particular flip, orientation, corners, and points.
@@ -122,8 +142,8 @@ class Player:
             """
             if no_restriction:
                 self.corners = set()
-                for i in range(0, 14 + 1):
-                    for j in range(0, 14 + 1):
+                for i in range(0, board_size + 1):
+                    for j in range(0, board_size + 1):
                         self.corners.add((i, j))
             else:
                 self.corners = set([(i, j) for (i, j) in self.corners
