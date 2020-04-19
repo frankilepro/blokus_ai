@@ -7,10 +7,13 @@ from segment_tree import SegmentTree
 
 
 class ReplayMemory:
-    def __init__(self, max_size, batch_size):
+    def __init__(self, max_size, batch_size, gamma, nsteps=None):
         self.max_size = max_size
         self.batch_size = batch_size
         self.memory = deque([], maxlen=max_size)
+        self.nsteps = nsteps
+        self.nsteps_buffer = deque([], maxlen=nsteps)
+        self.gamma = gamma
 
     def __len__(self):
         return len(self.memory)
@@ -18,8 +21,27 @@ class ReplayMemory:
     def add_to_memory(self, state, action, next_state, reward, done, possible_move):
         self.memory.append((state, action, next_state, reward, done, possible_move))
 
+    def add_nsteps_memory(self, state, action, next_state, reward, done, possible_move):
+        self.nsteps_buffer.append((state, action, next_state, reward, done, possible_move))
+        if len(self.nsteps_buffer) < self.nsteps:
+            return
+
+        next_state, nsteps_reward, done = self.nsteps_buffer[-1][2:5]
+        for i in range(self.nsteps - 2, -1, -1):
+            ns, r, d = self.nsteps_buffer[i][2:5]
+            nsteps_reward = nsteps_reward * (self.gamma ** i) * (1 - d) + r
+            if d:
+                next_state = ns
+                done = d
+        state, action = self.nsteps_buffer[0][:2]
+        possible_move = self.nsteps_buffer[0][-1]
+        self.add_to_memory(state, action, next_state, nsteps_reward, done, possible_move)
+
     def random_batch(self):
         random_batch = random.sample(self.memory, self.batch_size)
+        return self.create_batch(random_batch)
+
+    def create_batch(self, random_batch):
         states = []
         actions = []
         next_states = []
@@ -40,8 +62,6 @@ class ReplayMemory:
         rewards = torch.tensor(rewards).unsqueeze(1).to(states.device)
         dones = torch.tensor(dones).unsqueeze(1).to(states.device)
         return states, actions, next_states, rewards, dones, possible_moves
-
-
 
 
 # TODO not finishedparame

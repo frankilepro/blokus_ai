@@ -131,7 +131,7 @@ class DistributionalNetwork(nn.Module):
     def action_distr(self, x, env):
         x = self.layers(x)
         x = x.reshape(-1, self.out_dim, self.num_bins)
-        return nn.Softmax(dim=-1)(x).clamp(1e-5)
+        return nn.Softmax(dim=2)(x).clamp(1e-5)
 
     def forward(self, x, env):
-        return torch.sum(self.action_distr(x, env) * self.v_range, dim=-1)
+        return torch.sum(self.action_distr(x, env) * self.v_range, dim=2)
