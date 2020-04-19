@@ -3,7 +3,7 @@ import os
 import gym
 import torch.optim as optim
 
-from memory_replay import ReplayMemory
+from memory_replay import ReplayMemory, PrioritizedExperienceReplay
 from models import *
 
 
@@ -43,13 +43,19 @@ class Agent:
                  is_dueling=False,
                  is_noisy=False,
                  is_distributional=False,
+                 is_prioritized=False,
+                 prioritized_params=None,
                  distr_params=None):
         self.env = env
         self.num_episodes = num_episodes
         self.gamma = gamma
         self.batch_size = batch_size
         self.nsteps = nsteps
-        self.memory = ReplayMemory(memory_size, self.batch_size, self.gamma, self.nsteps)
+        if is_prioritized:
+            self.prioritized_params = prioritized_params
+            self.memory = PrioritizedExperienceReplay(memory_size, self.batch_size, prioritized_params)
+        else:
+            self.memory = ReplayMemory(memory_size, self.batch_size, self.gamma, self.nsteps)
         self.eps = eps
         self.min_eps = min_eps
         self.eps_decay = eps_decay
@@ -61,6 +67,7 @@ class Agent:
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
+        self.is_prioritized = is_prioritized
         if self.is_distributional:
             self.distr_params = distr_params
             self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
@@ -96,13 +103,20 @@ class Agent:
 
         return next_action
 
-    def update(self, reward, done, next_state, state, action, possible_move):
+    def update(self, reward, done, next_state, state, action, possible_move, indices=None, weights=None):
         if self.is_distributional:
             loss = self.get_distributional_loss(reward, done, next_state, state, action)
         else:
             target = self.get_target(reward, done, next_state, possible_move)
             prediction = self.model(state, possible_move).gather(1, action)
-            loss = F.smooth_l1_loss(prediction, target)
+            reduction = "none" if self.is_prioritized else "mean"
+            loss = F.smooth_l1_loss(prediction, target, reduction=reduction)
+            if self.is_prioritized:
+                loss_no_reduction = loss.clone()
+                loss = torch.mean(loss * weights.to(self.device))
+                priority = loss_no_reduction.detach().cpu().numpy() + self.prioritized_params["eps"]
+                self.memory.update_priorities(indices, priority)
+
         self.loss.append(loss)
         self.optimizer.zero_grad()
         loss.backward()
@@ -154,8 +168,12 @@ class Agent:
         return (1 - done.float()) * next_state_max_Q * self.gamma + reward.float()
 
     def replay(self):
-        state, action, next_state, reward, done, possible_move = self.memory.random_batch()
-        self.update(reward, done, next_state, state, action, possible_move)
+        if self.is_prioritized:
+            state, action, next_state, reward, done, possible_move, idx, weight = self.memory.get_prioritized_sample()
+        else:
+            idx, weight = None, None
+            state, action, next_state, reward, done, possible_move = self.memory.get_random_batch()
+        self.update(reward, done, next_state, state, action, possible_move, idx, weight)
 
     def ohe(self, state):
         ohe_state = torch.zeros(self.obs_size).to(self.device)
@@ -182,8 +200,12 @@ class Agent:
                 next_state = self.ohe(next_state)
                 if self.nsteps is not None:
                     self.memory.add_nsteps_memory(state, action, next_state, reward, done, possible_move)
-                else:
-                    self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
+                elif self.is_prioritized:
+                    self.prioritized_params["b"] = min(1.0, i / num_episodes) * (1 - self.prioritized_params["b"]) + \
+                                                   self.prioritized_params["b"]
+                    self.memory.update_beta(self.prioritized_params["b"])
+
+                self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
 
                 rewards_lst.append(rewards)
                 state = next_state
@@ -234,8 +256,10 @@ if __name__ == "__main__":
     model_filename = "blokus"
 
     dist_params = {"num_bins": 51, "v_min": 0.0, "v_max": 1.0}
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, nsteps=3, is_double=False,
-                  is_dueling=False, is_noisy=False, is_distributional=False, distr_params=dist_params)
+    prioritized_params = {"a": 0.2, "b": 0.6, "eps": 1e-5}
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, nsteps=None,
+                  is_double=False, is_dueling=False, is_noisy=False, is_distributional=False, distr_params=dist_params,
+                  is_prioritized=True, prioritized_params=prioritized_params)
     agent.train()
     # for i in range(10):
     #     agent.test()
