@@ -54,8 +54,8 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        self.obs_size = env.observation_space.n
+        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        # self.obs_size = env.observation_space.n
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
@@ -72,7 +72,7 @@ class Agent:
             self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
         else:
             self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
-        # self.model = torch.load(self.model_path, map_location=self.device)
+            # self.model = torch.load(self.model_path, map_location=self.device)
         self.is_double = is_double
         self.loss = []
         if self.is_double:
@@ -88,16 +88,18 @@ class Agent:
             next_action = self.env.action_space.sample()
         # Greedy choice (exploitation)
         else:
-            next_action = int(self.model(state, self.env).argmax().detach().cpu())
+            possible_moves = [self.env.ai_possible_indexes()]
+            # possible_moves = [[0, 1, 2, 3]]
+            next_action = int(self.model(state.unsqueeze(0), possible_moves).argmax().detach().cpu())
 
         return next_action
 
-    def update(self, reward, done, next_state, state, action):
+    def update(self, reward, done, next_state, state, action, possible_move):
         if self.is_distributional:
             loss = self.get_distributional_loss(reward, done, next_state, state, action)
         else:
-            target = self.get_target(reward, done, next_state)
-            prediction = self.model(state, self.env).gather(1, action)
+            target = self.get_target(reward, done, next_state, possible_move)
+            prediction = self.model(state, possible_move).gather(1, action)
             loss = F.smooth_l1_loss(prediction, target)
         self.loss.append(loss)
         self.optimizer.zero_grad()
@@ -136,30 +138,30 @@ class Agent:
 
         return - (distr_projection * log_action_distr).sum(1).mean()
 
-    def get_target_double(self, next_state):
-        action = self.model(next_state, self.env).argmax()
+    def get_target_double(self, next_state, possible_move):
+        action = self.model(next_state, possible_move).argmax(1)
         return self.model_target(next_state)[action]
 
-    def get_target(self, reward, done, next_state):
+    def get_target(self, reward, done, next_state, possible_move):
         if self.is_double:
-            next_state_max_Q = self.get_target_double(next_state)
+            next_state_max_Q = self.get_target_double(next_state, possible_move)
         else:
-            next_state_max_Q = self.model(next_state, self.env).max()
+            next_state_max_Q = self.model(next_state, possible_move).max(dim=1).values.unsqueeze(1)
 
         # y = r if done, y = r + gamma * max Q(s',a') if not done
-        return (1 - done.float()) * next_state_max_Q * self.gamma + reward
+        return (1 - done.float()) * next_state_max_Q * self.gamma + reward.float()
 
     def replay(self):
-        state, action, next_state, reward, done = self.memory.random_batch()
-        self.update(reward, done, next_state, state, action)
-
-    def ohe(self, state):
-        ohe_state = torch.zeros(self.obs_size).to(self.device)
-        ohe_state[state] = 1
-        return ohe_state
+        state, action, next_state, reward, done, possible_move = self.memory.random_batch()
+        self.update(reward, done, next_state, state, action, possible_move)
 
     # def ohe(self, state):
-    #     return state.view(-1).type(torch.float32).to(self.device)
+    #     ohe_state = torch.zeros(self.obs_size).to(self.device)
+    #     ohe_state[state] = 1
+    #     return ohe_state
+
+    def ohe(self, state):
+        return state.view(-1).type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
@@ -171,10 +173,12 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, info = self.env.step(action)
+                # possible_move = self.env.ai_possible_indexes()
+                possible_move = [0, 1, 2, 3]
                 # env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
-                self.memory.add_to_memory(state, action, next_state, reward, done)
+                self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
 
                 rewards_lst.append(rewards)
                 state = next_state
@@ -214,10 +218,10 @@ class Agent:
 
 
 if __name__ == "__main__":
-    env = gym.make("FrozenLake-v0")
-    # env = gym.make("blokus:blokus-v0")
-    memory_size = 1000
-    num_episodes = 4000
+    # env = gym.make("FrozenLake-v0")
+    env = gym.make("blokus:blokus-v0")
+    memory_size = 100
+    num_episodes = 10000
     batch_size = 32
     # gamma = 0.999
     learning_rate = 0.001
@@ -225,7 +229,7 @@ if __name__ == "__main__":
 
     dist_params = {"num_bins": 51, "v_min": 0, "v_max": 1}
     agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, is_double=False,
-                  is_dueling=False, is_noisy=False, is_distributional=True, distr_params=dist_params)
+                  is_dueling=False, is_noisy=False, is_distributional=False, distr_params=dist_params)
     agent.train()
     # for i in range(10):
     #     agent.test()

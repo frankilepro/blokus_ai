@@ -15,8 +15,8 @@ class ReplayMemory:
     def __len__(self):
         return len(self.memory)
 
-    def add_to_memory(self, state, action, next_state, reward, done):
-        self.memory.append((state, action, next_state, reward, done))
+    def add_to_memory(self, state, action, next_state, reward, done, possible_move):
+        self.memory.append((state, action, next_state, reward, done, possible_move))
 
     def random_batch(self):
         random_batch = random.sample(self.memory, self.batch_size)
@@ -25,19 +25,21 @@ class ReplayMemory:
         next_states = []
         rewards = []
         dones = []
+        possible_moves = []
         for b in random_batch:
-            state, action, next_state, reward, done = b
+            state, action, next_state, reward, done, move = b
             states.append(state)
             actions.append(action)
             next_states.append(next_state)
             rewards.append(reward)
             dones.append(done)
+            possible_moves.append(move)
         states = torch.cat(states).reshape(self.batch_size, -1)
         actions = torch.tensor(actions).unsqueeze(1).to(states.device)
         next_states = torch.cat(next_states).reshape(self.batch_size, -1)
         rewards = torch.tensor(rewards).unsqueeze(1).to(states.device)
         dones = torch.tensor(dones).unsqueeze(1).to(states.device)
-        return states, actions, next_states, rewards, dones
+        return states, actions, next_states, rewards, dones, possible_moves
 
 
 
