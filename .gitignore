@@ -202,5 +202,4 @@ fabric.properties
 
 .vscode/
 blokus/**/*.c
-states*.json
 time*.txt
