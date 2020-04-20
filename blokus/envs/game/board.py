@@ -16,7 +16,7 @@ class Board:
         plt.ion()
         self.size = (n, m)
         self.player_ids = {}
-        self._tensor = torch.zeros(self.size, dtype=torch.int32)
+        self.tensor = torch.zeros(self.size, dtype=torch.int32)
         self.null = null
         self.empty = [[self.null] * m for i in range(n)]
         self.state = self.empty
@@ -24,10 +24,6 @@ class Board:
     @property
     def tensor(self):
         return self._tensor
-
-    # @tensor.setter
-    # def tensor(self, value):
-    #     self._tensor = value
 
     def update(self, player, move):
         """
@@ -37,12 +33,11 @@ class Board:
         if player.index not in self.player_ids:
             self.player_ids[player.index] = len(self.player_ids) + 1  # since 0 represents empty
 
-        id = self.player_ids[player.index]
         for row in range(len(self.state)):
             for col in range(len(self.state[1])):
                 if (col, row) in move:
                     self.state[row][col] = player.index
-                    self._tensor[row][col] = id
+                    self.tensor[row][col] = player.index  # TODO optimize with single container
 
     def in_bounds(self, point):
         """

@@ -34,9 +34,8 @@ class BlokusGame(Game):
         Uses functions from the board to see whether
         a player's proposed move is valid.
         """
-        if move.ID not in player.all_ids_to_move:
-            return False
-
+        # if move.ID not in player.all_ids_to_move:
+        #     return False
         move_points = move.points
         if any(not self.board.in_bounds(pt) for pt in move_points):
             return False

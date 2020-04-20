@@ -42,6 +42,9 @@ class BlokusEnv(gym.Env):
         if not cython.compiled:
             print("You should run 'python setup.py build_ext --inplace' to get a 3x speedup")
         self.all_possible_indexes_to_moves = None
+        self.starter_won = 0
+        self.last_won = 0
+        self.games_played = 0
         self.init_game()
 
     def init_game(self):
@@ -61,6 +64,8 @@ class BlokusEnv(gym.Env):
         for player in ordering:
             self.blokus_game.add_player(player)
 
+        self.starter_player = self.blokus_game.next_player().name
+        self.games_played += 1
         while self.blokus_game.next_player() != self.ai:
             self.__next_player_play()  # Let bots start
 
@@ -95,6 +100,8 @@ class BlokusEnv(gym.Env):
         winners = self.blokus_game.winners()
         done = winners is not None
         if done:
+            if len(winners) == 1 and winners[0] == self.starter_player:
+                self.starter_won += 1
             if "ai" in winners:
                 if len(winners) == 1:
                     reward = self.rewards['won']
