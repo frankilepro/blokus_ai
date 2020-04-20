@@ -9,7 +9,7 @@ def Minimax_Player(player, game, weights):
         Updates the corners of the player in the test board (copy), in case the
         corners have been covered by another player's pieces.
         """
-        player.corners = set([(i, j) for (i, j) in player.corners if board.state[j][i] == game.board.null])
+        player.corners = set([(i, j) for (i, j) in player.corners if board.tensor[j][i] == 0])
     # create a copy of the player's pieces
     shape_options = [p for p in player.pieces]
     # determine all possible moves
@@ -41,7 +41,7 @@ def Minimax_Player(player, game, weights):
             # create a copy of the player currently playing
             test_player = copy.deepcopy(player)
             # update the copy of the board with the Piece placement
-            board.update(test_player, piece.points)
+            board.update(test_player, piece)
             # update the current player (update corners) with the current Piece placement
             test_player.update_player(piece, board)
             # update the corners for all opponents
@@ -74,7 +74,7 @@ def Minimax_Player(player, game, weights):
                     # take the highest scoring move
                     best_move = by_score_op[0][0]
                     # update the board with the highest scoring move
-                    board.update(opponent, best_move.points)
+                    board.update(opponent, best_move)
                     # create a list of the other opponents
                     # other_opponents = [enemy for enemy in game_copy.players if enemy.label != opponent.label]
                     # update the corners of the other opponents

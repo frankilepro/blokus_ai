@@ -36,17 +36,20 @@ class BlokusGame(Game):
         """
         # if move.ID not in player.all_ids_to_move:
         #     return False
-        move_points = move.points
-        if any(not self.board.in_bounds(pt) for pt in move_points):
+        # if player.game.rounds == 10 and move.ID == 'L4' and player.index == 1:
+        # if sorted([(3, 2), (4, 2), (5, 2), (5, 3)]) == sorted(move.points):
+        #     print("", end="")
+
+        if any(not self.board.in_bounds(pt) for pt in move.points):
             return False
-        if self.board.overlap(move_points):
+        if self.board.overlap(move.points):
             return False
 
         if self.rounds < self.number_of_players:
-            if not any(pt in player.corners for pt in move_points):
+            if not any(pt in player.corners for pt in move.points):
                 return False
         else:
-            if self.board.adj(player, move_points) or not self.board.corner(player, move_points):
+            if self.board.adj(player, move) or not self.board.corner(player, move):
                 return False
 
         return True

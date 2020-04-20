@@ -1,6 +1,7 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
 # Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
 import json
+import numpy as np
 import multiprocessing as mp
 import itertools
 from functools import partial
@@ -48,7 +49,7 @@ class BlokusEnv(gym.Env):
         self.init_game()
 
     def init_game(self):
-        standard_size = Board(self.BOARD_SIZE, self.BOARD_SIZE, "_")
+        standard_size = Board(self.BOARD_SIZE)
         self.blokus_game = BlokusGame(standard_size, self.all_shapes)
 
         self.observation_space = spaces.Box(0, self.NUMBER_OF_PLAYERS, (self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
@@ -56,9 +57,9 @@ class BlokusEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
-        self.ai = Player(0, "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
+        self.ai = Player(1, "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
         bots = [Player(id, f"bot_{id}", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
-                for id in range(1, self.NUMBER_OF_PLAYERS)]
+                for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
         random.shuffle(ordering)
         for player in ordering:
@@ -76,7 +77,7 @@ class BlokusEnv(gym.Env):
         while not done and self.blokus_game.next_player() != self.ai:
             done, reward = self.__next_player_play()  # Let bots play
 
-        if not self.ai.remains_move and not done:
+        if not done and not self.ai.remains_move:
             while not done:
                 done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
 
@@ -148,13 +149,14 @@ class BlokusEnv(gym.Env):
             print("Building all possible states, this may take some time")
             dummy = Player("", "", None, self.all_shapes, self.blokus_game)
 
-            number_of_cores_to_use = mp.cpu_count() // 2
-            with mp.Pool(number_of_cores_to_use) as pool:
-                self.all_possible_indexes_to_moves = pool.map(
-                    partial(possible_moves_func, dummy, self.BOARD_SIZE), [[p] for p in self.all_shapes])
-            self.all_possible_indexes_to_moves = list(itertools.chain.from_iterable(self.all_possible_indexes_to_moves))
+            self.all_possible_indexes_to_moves = possible_moves_func(dummy, self.BOARD_SIZE, self.all_shapes)
+            # number_of_cores_to_use = mp.cpu_count() // 2
+            # with mp.Pool(number_of_cores_to_use) as pool:
+            #     self.all_possible_indexes_to_moves = pool.map(
+            #         partial(possible_moves_func, dummy, self.BOARD_SIZE), [[p] for p in self.all_shapes])
+            # self.all_possible_indexes_to_moves = list(itertools.chain.from_iterable(self.all_possible_indexes_to_moves))
             data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
-
+            # exit(1)
             os.makedirs(self.STATES_FOLDER, exist_ok=True)
             with open(state_file, "w") as json_file:
                 json.dump(data, json_file)

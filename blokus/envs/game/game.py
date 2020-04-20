@@ -18,8 +18,8 @@ class Game:
         self.number_of_players = number_of_players
 
     def add_player(self, player):
-        max_x = ((self.board).size[1] - 1)
-        max_y = ((self.board).size[0] - 1)
+        max_x = self.board.size - 1
+        max_y = self.board.size - 1
         starts = [(0, 0), (max_y, max_x), (0, max_x), (max_y, 0)]
         player.add_pieces(self.all_pieces)
         player.start_corner(starts[len(self.players)])
@@ -65,27 +65,27 @@ class Game:
             proposal = current.do_move()
             if proposal is None:
                 # move on to next player, increment rounds
-                first = (self.players).pop(0)
+                first = self.players.pop(0)
                 self.players = self.players + [first]
                 self.rounds += 1
             # ensure that the proposed move is valid
             elif self.valid_move(current, proposal):
                 # update the board with the move
-                (self.board).update(current, proposal.points)
+                self.board.update(current, proposal)
                 # let the player update itself accordingly
                 current.update_player(proposal, self.board)
                 # remove the piece that was played from the player
                 current.remove_piece(proposal)
                 # place the player at the back of the queue
-                first = (self.players).pop(0)
+                first = self.players.pop(0)
                 self.players = self.players + [first]
                 # increment the number of rounds just played
                 self.rounds += 1
             # interrupts the game if an invalid move is proposed
             else:
                 if current.name == "ai":
-                    # raise Exception("Invalid move by " + current.name + ".")
-                    raise InvalidMoveByAi()
+                    raise Exception("Invalid move by " + current.name + ".")
+                    # raise InvalidMoveByAi()
                 raise Exception("Invalid move by " + current.name + ".")
         else:
             pass

@@ -1,5 +1,4 @@
 import copy
-
 import numpy as np
 import random
 
@@ -14,7 +13,7 @@ def eval_move(piece, player, game, weights):
         Updates the corners of the player in the test board (copy), in case the
         corners have been covered by another player's pieces.
         """
-        player.corners = set([(i, j) for (i, j) in player.corners if test_board.state[j][i] == game.board.null])
+        player.corners = set([(i, j) for (i, j) in player.corners if test_board.tensor[j][i] == 0])
     # get board
     board = game.board
     # create a copy of the players in the game
@@ -24,7 +23,7 @@ def eval_move(piece, player, game, weights):
     # create a copy of the board
     test_board = copy.deepcopy(board)
     # update the copy of the board with the Piece placement
-    test_board.update(player, piece.points)
+    test_board.update(player, piece)
     # create a copy of the player currently playing
     test_player = copy.deepcopy(player)
     # update the current player (update corners) with the current Piece placement
@@ -95,8 +94,8 @@ class Player:
         """
         self.score = self.score + placement.size
         for c in placement.corners:
-            if (board.in_bounds(c) and (not board.overlap([c]))):
-                (self.corners).add(c)
+            if board.in_bounds(c) and not board.overlap([c]):
+                self.corners.add(c)
 
     def sample_move(self):
         keys = list(self.all_ids_to_move.keys())
@@ -142,12 +141,12 @@ class Player:
             """
             if no_restriction:
                 self.corners = set()
-                for i in range(0, board_size + 1):
-                    for j in range(0, board_size + 1):
+                for i in range(-6, board_size + 6):
+                    for j in range(-6, board_size + 6):
                         self.corners.add((i, j))
+                # self.corners = sorted(list(self.corners))
             else:
-                self.corners = set([(i, j) for (i, j) in self.corners
-                                    if self.game.board.state[j][i] == self.game.board.null])
+                self.corners = set([(i, j) for (i, j) in self.corners if self.game.board.tensor[j][i] == 0])
 
         # Check the corners before proceeding.
         check_corners(no_restriction)
@@ -155,7 +154,8 @@ class Player:
         placements = []
         visited = []
         # Loop through every available corner.
-        for cr in self.corners:
+        for x, y in self.corners:
+            # for cr in self.corners:
             # Look through every piece offered. (This will be restricted according
             # to certain algorithms.)
             for sh in pieces:
@@ -163,19 +163,28 @@ class Player:
                 # list of shapes is not overwritten.
                 try_out = copy.deepcopy(sh)
                 # Loop over every potential refpt the piece could have.
-                for num in range(try_out.size):
-                    try_out.create(num, cr)
-                    # And every possible flip.
-                    for fl in ["h", None]:
-                        try_out.flip(fl)
-                        # And every possible orientation.
-                        for rot in [90]*4:
-                            try_out.rotate(rot)
-                            candidate = copy.deepcopy(try_out)
-                            if self.game.valid_move(self, candidate):
-                                if not (set(candidate.points) in visited):
-                                    placements.append(candidate)
-                                    visited.append(set(candidate.points))
+                # for num in range(try_out.size):
+                try_out.set_points(x, y)
+                # try_out.create(num, cr)
+                # And every possible flip.
+                for fl in [None, "h"]:
+                    # for fl in ["h", "v"]:
+                    if fl is not None:
+                        try_out.flip()
+                    # try_out.flip(fl)
+                    # And every possible orientation.
+                    for rot in [90]*4:
+                        try_out.rotate()
+                        # try_out.rotate(rot)
+                        candidate = copy.deepcopy(try_out)
+                        if sorted([(3, 2), (4, 2), (5, 2), (5, 3)]) == sorted(candidate.points):
+                            print("", end="")
+                        if self.game.valid_move(self, candidate):
+                            if sorted([(3, 2), (4, 2), (5, 2), (5, 3)]) == sorted(candidate.points):
+                                print("", end="")
+                            if not (set(candidate.points) in visited):
+                                placements.append(candidate)
+                                visited.append(set(candidate.points))
         return placements
 
     def do_move(self):
