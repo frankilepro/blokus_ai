@@ -6,7 +6,7 @@ import multiprocessing as mp
 import itertools
 from functools import partial
 import matplotlib.pyplot as plt
-from blokus.envs.game.game import InvalidMoveByAi
+from blokus.envs.game.blokus_game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
 from blokus.envs.game.board import Board
 from blokus.envs.players.random_player import Random_Player
@@ -81,7 +81,8 @@ class BlokusEnv(gym.Env):
             while not done:
                 done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
 
-        return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
+        return self.blokus_game.board.tensor, reward, done, {}
+        # return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
 
     def __set_ai_strategy(self, action_id):
         self.ai.strategy = lambda player:\
@@ -149,14 +150,14 @@ class BlokusEnv(gym.Env):
             print("Building all possible states, this may take some time")
             dummy = Player("", "", None, self.all_shapes, self.blokus_game)
 
-            self.all_possible_indexes_to_moves = possible_moves_func(dummy, self.BOARD_SIZE, self.all_shapes)
-            # number_of_cores_to_use = mp.cpu_count() // 2
-            # with mp.Pool(number_of_cores_to_use) as pool:
-            #     self.all_possible_indexes_to_moves = pool.map(
-            #         partial(possible_moves_func, dummy, self.BOARD_SIZE), [[p] for p in self.all_shapes])
-            # self.all_possible_indexes_to_moves = list(itertools.chain.from_iterable(self.all_possible_indexes_to_moves))
+            # self.all_possible_indexes_to_moves = possible_moves_func(dummy, self.BOARD_SIZE, self.all_shapes)
+            number_of_cores_to_use = mp.cpu_count() // 2
+            with mp.Pool(number_of_cores_to_use) as pool:
+                self.all_possible_indexes_to_moves = pool.map(
+                    partial(possible_moves_func, dummy, self.BOARD_SIZE), [[p] for p in self.all_shapes])
+            self.all_possible_indexes_to_moves = list(itertools.chain.from_iterable(self.all_possible_indexes_to_moves))
             data = [move.to_json(idx) for idx, move in enumerate(self.all_possible_indexes_to_moves)]
-            # exit(1)
+
             os.makedirs(self.STATES_FOLDER, exist_ok=True)
             with open(state_file, "w") as json_file:
                 json.dump(data, json_file)

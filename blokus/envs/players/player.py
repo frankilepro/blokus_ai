@@ -45,7 +45,6 @@ class Player:
     def __init__(self, index, name, strategy, all_moves, game):
         self.index = index
         self.name = name
-        # self.piece_ids = set()
         self.corners = set()
         self.strategy = strategy
         self.score = 0
@@ -83,7 +82,6 @@ class Player:
         Removes a given piece (Shape object) from
         the list of pieces a player has.
         """
-        # self.piece_ids.remove(piece.ID)
         del self.all_ids_to_move[piece.ID]
 
     def update_player(self, placement, board):
@@ -144,48 +142,32 @@ class Player:
                 for i in range(-6, board_size + 6):
                     for j in range(-6, board_size + 6):
                         self.corners.add((i, j))
-                # self.corners = sorted(list(self.corners))
             else:
                 self.corners = set([(i, j) for (i, j) in self.corners if self.game.board.tensor[j][i] == 0])
 
         # Check the corners before proceeding.
         check_corners(no_restriction)
         # This list of placements will be updated with valid ones.
-        placements = []
-        visited = []
+        placements = set()
         # Loop through every available corner.
         for x, y in self.corners:
-            # for cr in self.corners:
             # Look through every piece offered. (This will be restricted according
             # to certain algorithms.)
             for sh in pieces:
                 # Create a new shape so that the one in the player's
                 # list of shapes is not overwritten.
                 try_out = copy.deepcopy(sh)
-                # Loop over every potential refpt the piece could have.
-                # for num in range(try_out.size):
                 try_out.set_points(x, y)
-                # try_out.create(num, cr)
                 # And every possible flip.
-                for fl in [None, "h"]:
-                    # for fl in ["h", "v"]:
-                    if fl is not None:
-                        try_out.flip()
-                    # try_out.flip(fl)
+                for _ in range(2):
+                    try_out.flip()
                     # And every possible orientation.
-                    for rot in [90]*4:
+                    for _ in range(4):
                         try_out.rotate()
-                        # try_out.rotate(rot)
                         candidate = copy.deepcopy(try_out)
-                        if sorted([(3, 2), (4, 2), (5, 2), (5, 3)]) == sorted(candidate.points):
-                            print("", end="")
                         if self.game.valid_move(self, candidate):
-                            if sorted([(3, 2), (4, 2), (5, 2), (5, 3)]) == sorted(candidate.points):
-                                print("", end="")
-                            if not (set(candidate.points) in visited):
-                                placements.append(candidate)
-                                visited.append(set(candidate.points))
-        return placements
+                            placements.add(candidate)
+        return list(placements)
 
     def do_move(self):
         """

@@ -15,27 +15,15 @@ class Board:
     def __init__(self, size):
         plt.ion()
         self.size = size
-        self.player_ids = {}
         self.tensor = torch.zeros((size, size), dtype=torch.int32)
-        # self.null = null
-        # self.empty = [[self.null] * m for i in range(n)]
-        # self.state = self.empty
 
     def update(self, player, move):
         """
         Takes in a Player object and a move as a
         list of integer tuples that represent the piece.
         """
-        if player.index not in self.player_ids:
-            self.player_ids[player.index] = len(self.player_ids) + 1  # since 0 represents empty
-
         for x, y in move.points:
             self.tensor[y][x] = player.index
-        # for row in range(self.size):
-        #     for col in range(self.size):
-        #         if (col, row) in move:
-        #             # self.state[row][col] = player.index
-        #             self.tensor[row][col] = player.index  # TODO optimize with single container
 
     def in_bounds(self, point):
         """
@@ -51,10 +39,10 @@ class Board:
         any pieces that have already been placed on the board.
         """
         return any(self.tensor[y][x] != 0 for x, y in points)
-        # if False in [(self.tensor[j][i] == 0) for (i, j) in move]:
-        #     return(True)
-        # else:
-        #     return(False)
+
+    def is_player_tile(self, player, point):
+        x, y = point
+        return self.in_bounds((x, y)) and self.tensor[y][x] == player.index
 
     def corner(self, player, move):
         """
@@ -62,27 +50,9 @@ class Board:
         function returns a boolean; whether the move is cornering
         any pieces of the player proposing the move.
         """
-        for x, y in move.points:
-            if self.in_bounds((x + 1, y + 1)) and self.tensor[y + 1][x + 1] == player.index or \
-               self.in_bounds((x - 1, y - 1)) and self.tensor[y - 1][x - 1] == player.index or \
-               self.in_bounds((x - 1, y + 1)) and self.tensor[y + 1][x - 1] == player.index or \
-               self.in_bounds((x + 1, y - 1)) and self.tensor[y - 1][x + 1] == player.index:
-                return True
-        return False
-        # validates = []
-        # for (i, j) in move.points:
-        #     if self.in_bounds((j + 1, i + 1)):
-        #         validates.append((self.tensor[j + 1][i + 1] == player.index))
-        #     if self.in_bounds((j - 1, i - 1)):
-        #         validates.append((self.tensor[j - 1][i - 1] == player.index))
-        #     if self.in_bounds((j - 1, i + 1)):
-        #         validates.append((self.tensor[j - 1][i + 1] == player.index))
-        #     if self.in_bounds((j + 1, i - 1)):
-        #         validates.append((self.tensor[j + 1][i - 1] == player.index))
-        # if True in validates:
-        #     return True
-        # else:
-        #     return False
+        return any(self.is_player_tile(player, (x + 1, y + 1)) or self.is_player_tile(player, (x - 1, y - 1)) or
+                   self.is_player_tile(player, (x - 1, y + 1)) or self.is_player_tile(player, (x + 1, y - 1))
+                   for x, y in move.points)
 
     def adj(self, player, move):
         """
@@ -90,27 +60,9 @@ class Board:
         the board which are occupied by the player
         proposing the move and returns a boolean.
         """
-        for x, y in move.points:
-            if self.in_bounds((x, y + 1)) and self.tensor[y + 1][x].item() == player.index or \
-               self.in_bounds((x, y - 1)) and self.tensor[y - 1][x].item() == player.index or \
-               self.in_bounds((x - 1, y)) and self.tensor[y][x - 1].item() == player.index or \
-               self.in_bounds((x + 1, y)) and self.tensor[y][x + 1].item() == player.index:
-                return True
-        return False
-        # validates = []
-        # for (i, j) in move.points:
-        #     if self.in_bounds((j, i + 1)):
-        #         validates.append((self.tensor[j][i + 1].item() == player.index))
-        #     if self.in_bounds((j, i - 1)):
-        #         validates.append((self.tensor[j][i - 1].item() == player.index))
-        #     if self.in_bounds((j - 1, i)):
-        #         validates.append((self.tensor[j - 1][i].item() == player.index))
-        #     if self.in_bounds((j + 1, i)):
-        #         validates.append((self.tensor[j + 1][i].item() == player.index))
-        # if True in validates:
-        #     return True
-        # else:
-        #     return False
+        return any(self.is_player_tile(player, (x, y + 1)) or self.is_player_tile(player, (x, y - 1)) or
+                   self.is_player_tile(player, (x - 1, y)) or self.is_player_tile(player, (x + 1, y))
+                   for x, y in move.points)
 
     def print_board(self, num=None, mode="human"):
         if mode == "human":
@@ -139,19 +91,12 @@ class Board:
             print(str(i) + ' ' * (n-len(str(i))), (' ' * n).join(row))
 
     def print_board_min(self):
-        all_non_zeros = self._tensor != 0
+        all_non_zeros = self.tensor != 0
         coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
         print(f"Coverage: {coverage:.2f}%")
 
     def fancyBoard(self, num):
         plt.clf()
-        # points = {}
-        # for y in enumerate(self.tensor):
-        #     for x in enumerate(y[1]):
-        #         id = x[1].item()
-        #         if id not in points:
-        #             points[id] = []
-        #         points[id].append((x[0], (self.size - 1) - y[0]))
 
         colors = {0: "lightgrey", 1: "red", 2: "blue", 3: "yellow", 4: "green"}
         ax = plt.subplot(xlim=(0, self.size), ylim=(0, self.size))
@@ -160,13 +105,6 @@ class Board:
                 polygon = plt.Polygon([[x, y], [x + 1, y], [x + 1, y + 1], [x, y + 1], [x, y]])
                 polygon.set_facecolor(colors[self.tensor[y][x].item()])
                 ax.add_patch(polygon)
-        # for i in range(self.size + 1):
-        #     for j in range(self.size + 1):
-        #         polygon = plt.Polygon([[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1], [i, j]])
-        #         for player, pts in points.items():
-        #             if (i, j) in pts:
-        #                 polygon.set_facecolor(colors[player])
-        #                 ax.add_patch(polygon)
 
         plt.yticks(np.arange(0, self.size, 1))
         plt.xticks(np.arange(0, self.size, 1))
