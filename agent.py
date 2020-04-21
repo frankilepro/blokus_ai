@@ -121,7 +121,8 @@ class Agent:
             possible_moves = [self.env.ai_possible_indexes()]
             # possible_moves = [[0, 1, 2, 3]]
             # possible_moves = [[0, 1]]
-            legal_action = LegalSoftmax()(self.model(state.unsqueeze(0), possible_moves), possible_moves)
+            # legal_action = LegalSoftmax()(self.model(state.unsqueeze(0), possible_moves), possible_moves)
+            legal_action = self.model(state.unsqueeze(0), possible_moves)
             next_action = int(legal_action.argmax().detach().cpu())
 
         return next_action
@@ -182,7 +183,8 @@ class Agent:
             return - (distr_projection * log_action_distr).sum(1).mean()
 
     def get_target_double(self, next_state, possible_move):
-        action = LegalSoftmax()(self.model(next_state, possible_move).argmax(dim=1, keepdim=True), possible_move)
+        # action = LegalSoftmax()(self.model(next_state, possible_move).argmax(dim=1, keepdim=True), possible_move)
+        action = self.model(next_state, possible_move).argmax(dim=1, keepdim=True)
         return self.model_target(next_state, possible_move).gather(1, action).detach()
 
     def get_target(self, reward, done, next_state, possible_move):

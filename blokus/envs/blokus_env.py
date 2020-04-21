@@ -1,11 +1,12 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
 # Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
 import json
+import numpy as np
 import multiprocessing as mp
 import itertools
 from functools import partial
 import matplotlib.pyplot as plt
-from blokus.envs.game.game import InvalidMoveByAi
+from blokus.envs.game.blokus_game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
 from blokus.envs.game.board import Board
 from blokus.envs.players.random_player import Random_Player
@@ -27,7 +28,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-    rewards = {'default': 0, 'won': 1, 'invalid': -1, 'lost': -2}
+    rewards = {'won': 1, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -2}
     STATES_FOLDER = "states"
 
     # Customization available by base classes
@@ -42,10 +43,13 @@ class BlokusEnv(gym.Env):
         if not cython.compiled:
             print("You should run 'python setup.py build_ext --inplace' to get a 3x speedup")
         self.all_possible_indexes_to_moves = None
+        self.starter_won = 0
+        self.last_won = 0
+        self.games_played = 0
         self.init_game()
 
     def init_game(self):
-        standard_size = Board(self.BOARD_SIZE, self.BOARD_SIZE, "_")
+        standard_size = Board(self.BOARD_SIZE)
         self.blokus_game = BlokusGame(standard_size, self.all_shapes)
 
         self.observation_space = spaces.Box(0, self.NUMBER_OF_PLAYERS, (self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
@@ -53,14 +57,16 @@ class BlokusEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
-        self.ai = Player(0, "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
+        self.ai = Player(1, "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
         bots = [Player(id, f"bot_{id}", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
-                for id in range(1, self.NUMBER_OF_PLAYERS)]
+                for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
-        random.shuffle(ordering)
+        # random.shuffle(ordering)
         for player in ordering:
             self.blokus_game.add_player(player)
 
+        self.starter_player = self.blokus_game.next_player().name
+        self.games_played += 1
         while self.blokus_game.next_player() != self.ai:
             self.__next_player_play()  # Let bots start
 
@@ -71,11 +77,12 @@ class BlokusEnv(gym.Env):
         while not done and self.blokus_game.next_player() != self.ai:
             done, reward = self.__next_player_play()  # Let bots play
 
-        if not self.ai.remains_move and not done:
+        if not done and not self.ai.remains_move:
             while not done:
                 done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
 
-        return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
+        return self.blokus_game.board.tensor, reward, done, {}
+        # return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
 
     def __set_ai_strategy(self, action_id):
         self.ai.strategy = lambda player:\
@@ -92,15 +99,20 @@ class BlokusEnv(gym.Env):
             return done, min(self.rewards['invalid'], reward)
 
     def __get_done_reward(self):
-        winner = self.blokus_game.winner()
-        done = winner is not None
+        winners = self.blokus_game.winners()
+        done = winners is not None
         if done:
-            if winner == "ai":
-                reward = self.rewards['won']
+            if len(winners) == 1 and winners[0] == self.starter_player:
+                self.starter_won += 1
+            if "ai" in winners:
+                if len(winners) == 1:
+                    reward = self.rewards['won']
+                else:
+                    reward = self.rewards['tie-won']
             else:
                 reward = self.rewards['lost']
         else:
-            reward = 0
+            reward = self.rewards['default']
         return done, reward
 
     def reset(self):
@@ -138,6 +150,7 @@ class BlokusEnv(gym.Env):
             print("Building all possible states, this may take some time")
             dummy = Player("", "", None, self.all_shapes, self.blokus_game)
 
+            # self.all_possible_indexes_to_moves = possible_moves_func(dummy, self.BOARD_SIZE, self.all_shapes)
             number_of_cores_to_use = mp.cpu_count() // 2
             with mp.Pool(number_of_cores_to_use) as pool:
                 self.all_possible_indexes_to_moves = pool.map(
