@@ -221,6 +221,7 @@ class NoisyDuelingDistributionalNetwork(nn.Module):
         self.value_layer_out = NoisyLayer(256, self.num_bins)
 
         self.custom_softmax = LegalSoftmax()
+        self.softmax = nn.Softmax(dim=2)
 
     def update_noise(self):
         self.advantage_layer_hidden.update_noise()
@@ -244,10 +245,7 @@ class NoisyDuelingDistributionalNetwork(nn.Module):
         value = self.value_layer_out(value).reshape(-1, 1, self.num_bins)
 
         q = value + advantage - advantage.mean(dim=1, keepdim=True)
-        return nn.Softmax(dim=2)(q).clamp(1e-5)
-
-    def forward(self, x, possible_moves):
-        return torch.sum(self.action_distr(x, possible_moves) * self.v_range, dim=2)
+        return self.softmax(q).clamp(1e-5)
 
     def update_noise(self):
         self.advantage_layer_hidden.update_noise()
@@ -255,3 +253,6 @@ class NoisyDuelingDistributionalNetwork(nn.Module):
 
         self.value_layer_hidden.update_noise()
         self.value_layer_out.update_noise()
+
+    def forward(self, x, possible_moves):
+        return torch.sum(self.action_distr(x, possible_moves) * self.v_range, dim=2)
