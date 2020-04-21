@@ -70,27 +70,14 @@ class Board:
         elif mode == "minimal":
             self.print_board_min()
         elif mode == "tensor":
-            print(self.tensor)
-        elif mode == "old":
-            self.printBoard()
+            self.print_tensor()
 
-    def printBoard(self):
-        n = 2
-        """
-        Prints the board where the representation of a board is
-        a list of row-lists. The function throws an error if the
-        the board is invalid: the length of the rows are not
-        the same.
-        """
-        assert(len(set([len(self.tensor[i]) for i in range(len(self.tensor))])) == 1)
-        print(' ' * n, end=' ')
-        for i in range(len(self.tensor[1])):
-            print(str(i) + ' ' * (n-len(str(i))), end=' ')
-        print()
-        for i, row in enumerate(self.tensor):
-            print(str(i) + ' ' * (n-len(str(i))), (' ' * n).join(row))
+    def print_tensor(self):
+        print(chr(27) + "[2J")
+        print(self.tensor.permute())
 
     def print_board_min(self):
+        print(chr(27) + "[2J")
         all_non_zeros = self.tensor != 0
         coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
         print(f"Coverage: {coverage:.2f}%")

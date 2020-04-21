@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 from blokus.envs.game.blokus_game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
 from blokus.envs.game.board import Board
-from blokus.envs.players.random_player import Random_Player
+from blokus.envs.players.ai_player import AiPlayer
+from blokus.envs.players.random_player import RandomPlayer
+from blokus.envs.players.greedy_player import GreedyPlayer
 from blokus.envs.players.player import Player
 from blokus.envs.shapes.shape import Shape
 from blokus.envs.shapes.shapes import get_all_shapes
@@ -36,6 +38,7 @@ class BlokusEnv(gym.Env):
     BOARD_SIZE = 21
     STATES_FILE = "states.json"
     all_shapes = get_all_shapes()
+    # bot_type = "random"
 
     def __init__(self):
         assert 2 <= self.NUMBER_OF_PLAYERS <= 4, "Between 2 and 3 players"
@@ -57,9 +60,9 @@ class BlokusEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
-        self.ai = Player(1, "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
-        bots = [Player(id, f"bot_{id}", Random_Player, self.all_possible_indexes_to_moves,
-                       self.blokus_game, deteministic=True)
+        self.ai = AiPlayer(1, "ai", self.all_possible_indexes_to_moves, self.blokus_game)
+        bots = [GreedyPlayer(id, f"bot_{id}", self.all_possible_indexes_to_moves,
+                             self.blokus_game, deterministic=True)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
         # random.shuffle(ordering)
@@ -72,13 +75,14 @@ class BlokusEnv(gym.Env):
             self.__next_player_play()  # Let bots start
 
     def step(self, action_id):
-        self.__set_ai_strategy(action_id)
+        self.ai.next_move = self.all_possible_indexes_to_moves[action_id]
 
         done, reward = self.__next_player_play()  # Let ai play
         while not done and self.blokus_game.next_player() != self.ai:
             done, _ = self.__next_player_play()  # Let bots play
 
         if not done and not self.ai.remains_move:
+            self.ai.next_move = None
             while not done:
                 done, _ = self.__next_player_play()  # If ai has no move left, let the game finish
 
@@ -88,16 +92,12 @@ class BlokusEnv(gym.Env):
         return self.blokus_game.board.tensor, reward, done, {}
         # return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
 
-    def __set_ai_strategy(self, action_id):
-        self.ai.strategy = lambda player:\
-            None if not self.ai.remains_move else self.all_possible_indexes_to_moves[action_id]
-
     def __next_player_play(self):
         try:
             self.blokus_game.play()
             return self.__get_done_reward()
         except InvalidMoveByAi:
-            self.__set_ai_strategy(self.ai_sample_possible_index())
+            self.ai.next_move = self.ai_sample_possible_index()
             self.blokus_game.play()
             done, reward = self.__get_done_reward()
             return done, min(self.rewards['invalid'], reward)
@@ -152,7 +152,7 @@ class BlokusEnv(gym.Env):
                 self.all_possible_indexes_to_moves = [Shape.from_json(move) for move in json.load(json_file)]
         else:
             print("Building all possible states, this may take some time")
-            dummy = Player("", "", None, self.all_shapes, self.blokus_game)
+            dummy = Player("", "", self.all_shapes, self.blokus_game)
 
             # self.all_possible_indexes_to_moves = possible_moves_func(dummy, self.BOARD_SIZE, self.all_shapes)
             number_of_cores_to_use = mp.cpu_count() // 2
