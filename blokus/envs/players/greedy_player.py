@@ -1,5 +1,6 @@
 from blokus.envs.players.player import Player
 import numpy as np
+import random
 
 # def Greedy_Player(player, game, weights):
 #     """
@@ -71,12 +72,14 @@ class GreedyPlayer(Player):
             if size == 0 and len(possible_moves) == 0:
                 return None
 
-        best_move = possible_moves[0]
-        best_score = self.score_move(best_move)
+        best_moves = []
+        best_score = self.score_move(possible_moves[0])
         for move in possible_moves:
             new_score = self.score_move(move)
             if new_score > best_score:
                 best_score = new_score
-                best_move = move
+                best_moves = [move]
+            elif new_score == best_score:
+                best_moves.append(move)
 
-        return best_move
+        return random.choice(best_moves)
