@@ -12,7 +12,6 @@ ext_modules = [
     Extension("blokus.envs.players.player", ["blokus/envs/players/player.py"]),
     Extension("blokus.envs.players.random_player", ["blokus/envs/players/random_player.py"]),
     Extension("blokus.envs.game.blokus_game", ["blokus/envs/game/blokus_game.py"]),
-    Extension("blokus.envs.game.game", ["blokus/envs/game/game.py"]),
     Extension("blokus.envs.game.board", ["blokus/envs/game/board.py"]),
 ]
 

@@ -64,8 +64,8 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
-        self.obs_size = env.observation_space.shape[0]
-        # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+        # self.obs_size = env.observation_space.shape[0]
+        self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
         # self.obs_size = env.observation_space.n
 
         self.is_dueling = is_dueling
@@ -118,10 +118,12 @@ class Agent:
             next_action = self.env.action_space.sample()
         # Greedy choice (exploitation)
         else:
-            # possible_moves = [self.env.ai_possible_indexes()]
+            possible_moves = [self.env.ai_possible_indexes()]
             # possible_moves = [[0, 1, 2, 3]]
-            possible_moves = [[0, 1]]
-            next_action = int(self.model(state.unsqueeze(0), possible_moves).argmax().detach().cpu())
+            # possible_moves = [[0, 1]]
+            # legal_action = LegalSoftmax()(self.model(state.unsqueeze(0), possible_moves), possible_moves)
+            legal_action = self.model(state.unsqueeze(0), possible_moves)
+            next_action = int(legal_action.argmax().detach().cpu())
 
         return next_action
 
@@ -181,6 +183,7 @@ class Agent:
             return - (distr_projection * log_action_distr).sum(1).mean()
 
     def get_target_double(self, next_state, possible_move):
+        # action = LegalSoftmax()(self.model(next_state, possible_move).argmax(dim=1, keepdim=True), possible_move)
         action = self.model(next_state, possible_move).argmax(dim=1, keepdim=True)
         return self.model_target(next_state, possible_move).gather(1, action).detach()
 
@@ -206,12 +209,12 @@ class Agent:
     #     ohe_state[state] = 1
     #     return ohe_state
 
-    def ohe(self, state):
-        return torch.tensor(state).float().to(self.device)
-
     # def ohe(self, state):
-    #     return state.view(-1).type(torch.float32).to(self.device)
-        # return state.type(torch.float32).to(self.device)
+    #     return torch.tensor(state).float().to(self.device)
+
+    def ohe(self, state):
+        return state.view(-1).type(torch.float32).to(self.device)
+        return state.type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
@@ -225,9 +228,9 @@ class Agent:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, _ = self.env.step(action)
 
-                # possible_move = self.env.ai_possible_indexes()
+                possible_move = self.env.ai_possible_indexes()
                 # possible_move = [0, 1, 2, 3]
-                possible_move = [0, 1]
+                # possible_move = [0, 1]
                 env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
@@ -287,8 +290,8 @@ class Agent:
 
 
 if __name__ == "__main__":
-    env = gym.make("CartPole-v0")
-    # env = gym.make("blokus:blokus-simple-v0")
+    # env = gym.make("CartPole-v0")
+    env = gym.make("blokus:blokus-simple-v0")
     memory_size = 1000
     num_episodes = 5000
 
