@@ -58,7 +58,8 @@ class BlokusEnv(gym.Env):
         self.action_space.sample = self.ai_sample_possible_index
 
         self.ai = Player(1, "ai", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
-        bots = [Player(id, f"bot_{id}", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
+        bots = [Player(id, f"bot_{id}", Random_Player, self.all_possible_indexes_to_moves,
+                       self.blokus_game, deteministic=True)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
         # random.shuffle(ordering)

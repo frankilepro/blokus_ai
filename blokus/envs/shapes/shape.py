@@ -78,6 +78,10 @@ class Shape:
         # return self.idx == value.idx  # TODO optimize
         return sorted(self.points) == sorted(value.points)
 
+    def __lt__(self, value):
+        return self.idx < value.idx  # TODO optimize
+        # return sorted(self.points) == sorted(value.points)
+
     def __hash__(self):
         # return self.idx  # TODO optimize
         return hash(str(sorted(self.points)))

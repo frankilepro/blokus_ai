@@ -16,7 +16,7 @@ if __name__ == "__main__":
                 observation = env.reset()
                 break
 
-            # env.render("minimal")
+            env.render("human")
             # input()
             action = env.action_space.sample()
             action = random.randint(0, 918)
