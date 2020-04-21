@@ -1,10 +1,12 @@
 from blokus.envs.blokus_env import BlokusEnv
 import gym
+import random
 
 if __name__ == "__main__":
     # env = BlokusEnv()
-    env = gym.make("blokus:blokus-duo-v0")  # Make sure to do: pip install -e blokus in root
-    for _ in range(10):
+    env = gym.make("blokus:blokus-simple-v0")  # Make sure to do: pip install -e blokus in root
+    print(f"number of possible moves {env.action_space}")
+    for _ in range(100000):
         done = False
         while True:
             if done:
@@ -14,9 +16,12 @@ if __name__ == "__main__":
                 observation = env.reset()
                 break
 
-            env.render("human")
+            # env.render("human")
+            # input()
             action = env.action_space.sample()
+            action = random.randint(0, 918)
             observation, reward, done, info = env.step(action)
+            # print(reward)
             # print(reward)
 
     print(f"Starter won {env.starter_won / env.games_played * 100:.2f}%")

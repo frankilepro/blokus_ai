@@ -35,6 +35,9 @@ class BlokusGame:
         Uses functions from the board to see whether
         a player's proposed move is valid.
         """
+        if move.ID not in player.all_ids_to_move:
+            return False
+
         if any(not self.board.in_bounds(pt) for pt in move.points):
             return False
         if self.board.overlap(move.points):
@@ -106,8 +109,8 @@ class BlokusGame:
             # interrupts the game if an invalid move is proposed
             else:
                 if current.name == "ai":
-                    raise Exception("Invalid move by " + current.name + ".")
-                    # raise InvalidMoveByAi()
+                    # raise Exception("Invalid move by " + current.name + ".")
+                    raise InvalidMoveByAi()
                 raise Exception("Invalid move by " + current.name + ".")
         else:
             pass

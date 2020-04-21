@@ -28,7 +28,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-    rewards = {'won': 2, 'tie-won': 0, 'default': 0, 'invalid': -1, 'lost': -2}
+    rewards = {'won': 2, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -2}
     STATES_FOLDER = "states"
 
     # Customization available by base classes
@@ -61,7 +61,7 @@ class BlokusEnv(gym.Env):
         bots = [Player(id, f"bot_{id}", Random_Player, self.all_possible_indexes_to_moves, self.blokus_game)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
-        random.shuffle(ordering)
+        # random.shuffle(ordering)
         for player in ordering:
             self.blokus_game.add_player(player)
 
@@ -75,11 +75,14 @@ class BlokusEnv(gym.Env):
 
         done, reward = self.__next_player_play()  # Let ai play
         while not done and self.blokus_game.next_player() != self.ai:
-            done, reward = self.__next_player_play()  # Let bots play
+            done, _ = self.__next_player_play()  # Let bots play
 
         if not done and not self.ai.remains_move:
             while not done:
-                done, reward = self.__next_player_play()  # If ai has no move left, let the game finish
+                done, _ = self.__next_player_play()  # If ai has no move left, let the game finish
+
+        if done:
+            done, reward = self.__get_done_reward()
 
         return self.blokus_game.board.tensor, reward, done, {}
         # return self.blokus_game.board.tensor, reward, done, {'valid_actions': self.ai_possible_mask()}
