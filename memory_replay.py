@@ -66,8 +66,8 @@ class ReplayMemory:
 
 # Inspired from https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/03.per.ipynb
 class PrioritizedExperienceReplay(ReplayMemory):
-    def __init__(self, max_size, batch_size, prioritized_params):
-        super(PrioritizedExperienceReplay, self).__init__(max_size, batch_size)
+    def __init__(self, max_size, batch_size, prioritized_params, nsteps=None):
+        super(PrioritizedExperienceReplay, self).__init__(max_size, batch_size, nsteps=nsteps)
         self.max_size = max_size
         self.tree_capacity = 1
         while self.tree_capacity < self.max_size:

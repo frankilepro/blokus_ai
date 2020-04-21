@@ -2,6 +2,7 @@ import os
 
 import gym
 import torch.optim as optim
+import matplotlib.pyplot as plt
 
 from memory_replay import ReplayMemory, PrioritizedExperienceReplay
 from models import *
@@ -37,7 +38,8 @@ class Agent:
                  nsteps=None,
                  eps=1,
                  min_eps=0.01,
-                 eps_decay=0.005,
+                 eps_decay=0.0005,
+                 preps_decay=0.999,
                  gamma=0.9,
                  is_double=False,
                  is_dueling=False,
@@ -53,7 +55,7 @@ class Agent:
         self.nsteps = nsteps
         if is_prioritized:
             self.prioritized_params = prioritized_params
-            self.memory = PrioritizedExperienceReplay(memory_size, self.batch_size, prioritized_params)
+            self.memory = PrioritizedExperienceReplay(memory_size, self.batch_size, prioritized_params, self.nsteps)
         else:
             self.memory = ReplayMemory(memory_size, self.batch_size, self.gamma, self.nsteps)
         self.eps = eps
@@ -62,30 +64,49 @@ class Agent:
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
         self.model_path = os.path.join("models", model_filename + ".pt")
         # Blokus
+        self.obs_size = env.observation_space.shape[0]
         # self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-        self.obs_size = env.observation_space.n
+        # self.obs_size = env.observation_space.n
+
         self.is_dueling = is_dueling
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
         self.is_prioritized = is_prioritized
-        if self.is_distributional:
+        if self.is_distributional and self.is_noisy and self.is_dueling:
             self.distr_params = distr_params
             self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
                                                           self.distr_params["v_max"],
                                                           self.distr_params["num_bins"]).to(self.device)
-        if self.is_dueling:
+            self.model = NoisyDuelingDistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
+
+        elif self.is_distributional:
+            self.distr_params = distr_params
+            self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
+                                                          self.distr_params["v_max"],
+                                                          self.distr_params["num_bins"]).to(self.device)
+            self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
+        elif self.is_noisy and self.is_dueling:
+            self.model = NoisyDuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
+        elif self.is_dueling:
             self.model = DuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
         elif self.is_noisy:
             self.model = NoisyNetwork(self.obs_size, env.action_space.n).to(self.device)
-        elif self.is_distributional:
-            self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
-        else:
+        elif not self.is_distributional:
             self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
             # self.model = torch.load(self.model_path, map_location=self.device)
         self.is_double = is_double
         self.loss = []
         if self.is_double:
-            self.model_target = DQN(self.obs_size, env.action_space.n).to(self.device)
+            if self.is_noisy and self.is_dueling and self.is_distributional:
+                self.model_target = NoisyDuelingDistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
+            elif self.is_noisy and self.is_dueling:
+                self.model_target = NoisyDuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
+            elif self.is_distributional:
+                self.model_target = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params).to(self.device)
+            elif self.is_dueling:
+                self.model_target = DuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
+            else:
+                self.model_target = DQN(self.obs_size, env.action_space.n).to(self.device)
             self.model_target.load_state_dict(self.model.state_dict())
             self.model_target.eval()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -98,7 +119,8 @@ class Agent:
         # Greedy choice (exploitation)
         else:
             # possible_moves = [self.env.ai_possible_indexes()]
-            possible_moves = [[0, 1, 2, 3]]
+            # possible_moves = [[0, 1, 2, 3]]
+            possible_moves = [[0, 1]]
             next_action = int(self.model(state.unsqueeze(0), possible_moves).argmax().detach().cpu())
 
         return next_action
@@ -111,11 +133,11 @@ class Agent:
             prediction = self.model(state, possible_move).gather(1, action)
             reduction = "none" if self.is_prioritized else "mean"
             loss = F.smooth_l1_loss(prediction, target, reduction=reduction)
-            if self.is_prioritized:
-                loss_no_reduction = loss.clone()
-                loss = torch.mean(loss * weights.to(self.device))
-                priority = loss_no_reduction.detach().cpu().numpy() + self.prioritized_params["eps"]
-                self.memory.update_priorities(indices, priority)
+        if self.is_prioritized:
+            loss_no_reduction = loss.clone()
+            loss = torch.mean(loss * weights.to(self.device))
+            priority = loss_no_reduction.detach().cpu().numpy() + self.prioritized_params["eps"]
+            self.memory.update_priorities(indices, priority)
 
         self.loss.append(loss)
         self.optimizer.zero_grad()
@@ -124,6 +146,8 @@ class Agent:
 
         if self.is_noisy:
             self.model.update_noise()
+            if self.is_double:
+                self.model_target.update_noise()
 
     # Inspired from https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/06.categorical_dqn.ipynb
     def get_distributional_loss(self, reward, done, next_state, state, action):
@@ -151,18 +175,20 @@ class Agent:
             distr_projection.reshape(-1).index_add_(0,
                                                     (delta.ceil() + offset).long().reshape(-1),
                                                     (next_action_distr * (delta - delta.floor())).reshape(-1))
-
-        return - (distr_projection * log_action_distr).sum(1).mean()
+        if self.is_prioritized:
+            return - (distr_projection * log_action_distr).sum(1)
+        else:
+            return - (distr_projection * log_action_distr).sum(1).mean()
 
     def get_target_double(self, next_state, possible_move):
-        action = self.model(next_state, possible_move).argmax(1)
-        return self.model_target(next_state)[action]
+        action = self.model(next_state, possible_move).argmax(dim=1, keepdim=True)
+        return self.model_target(next_state, possible_move).gather(1, action).detach()
 
     def get_target(self, reward, done, next_state, possible_move):
         if self.is_double:
             next_state_max_Q = self.get_target_double(next_state, possible_move)
         else:
-            next_state_max_Q = self.model(next_state, possible_move).max(dim=1).values.unsqueeze(1)
+            next_state_max_Q = self.model(next_state, possible_move).max(dim=1, keepdim=True).values
 
         # y = r if done, y = r + gamma * max Q(s',a') if not done
         return (1 - done.float()) * next_state_max_Q * self.gamma + reward.float()
@@ -175,17 +201,22 @@ class Agent:
             state, action, next_state, reward, done, possible_move = self.memory.get_random_batch()
         self.update(reward, done, next_state, state, action, possible_move, idx, weight)
 
+    # def ohe(self, state):
+    #     ohe_state = torch.zeros(self.obs_size).to(self.device)
+    #     ohe_state[state] = 1
+    #     return ohe_state
+
     def ohe(self, state):
-        ohe_state = torch.zeros(self.obs_size).to(self.device)
-        ohe_state[state] = 1
-        return ohe_state
+        return torch.tensor(state).float().to(self.device)
 
     # def ohe(self, state):
     #     return state.view(-1).type(torch.float32).to(self.device)
+        # return state.type(torch.float32).to(self.device)
 
     def train(self):
         rewards_lst = []
         best_rate = 0
+        plot_rewards = []
         for i in range(self.num_episodes):
             rewards = 0
             done = False
@@ -193,21 +224,23 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, _ = self.env.step(action)
+
                 # possible_move = self.env.ai_possible_indexes()
-                possible_move = [0, 1, 2, 3]
-                # env.render("human")
+                # possible_move = [0, 1, 2, 3]
+                possible_move = [0, 1]
+                env.render("human")
                 rewards += reward
                 next_state = self.ohe(next_state)
-                if self.nsteps is not None:
-                    self.memory.add_nsteps_memory(state, action, next_state, reward, done, possible_move)
-                elif self.is_prioritized:
+
+                if self.is_prioritized:
                     self.prioritized_params["b"] = min(1.0, i / num_episodes) * (1 - self.prioritized_params["b"]) + \
                                                    self.prioritized_params["b"]
                     self.memory.update_beta(self.prioritized_params["b"])
 
-                self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
-
-                rewards_lst.append(rewards)
+                if self.nsteps is not None:
+                    self.memory.add_nsteps_memory(state, action, next_state, reward, done, possible_move)
+                else:
+                    self.memory.add_to_memory(state, action, next_state, reward, done, possible_move)
                 state = next_state
 
                 if not i % 20 and self.is_double:
@@ -216,12 +249,21 @@ class Agent:
                 if len(self.memory) > self.batch_size:
                     self.replay()
                     self.eps = self.min_eps + (self.eps - self.min_eps) * np.exp(-self.eps_decay * i)
+                    # self.eps = max(self.min_eps, self.eps * self.eps_decay)
+
+            rewards_lst.append(rewards)
+            plot_rewards.append(rewards)
+                # self.eps = self.min_eps + (self.eps - self.min_eps) * np.exp(-self.eps_decay * i)
+                # print(self.eps)
 
             if not i % 10 and i != 0:
                 print('Episode {} Loss: {} Reward Rate {}'.format(i, self.loss[-1], str(sum(rewards_lst) / i)))
+
                 if (sum(rewards_lst) / i) > best_rate:
                     best_rate = (sum(rewards_lst) / i)
                     torch.save(self.model, self.model_path)
+        plt.plot(plot_rewards)
+        plt.show()
         torch.save(self.model, self.model_path)
         self.env.close()
 
@@ -245,20 +287,20 @@ class Agent:
 
 
 if __name__ == "__main__":
-    env = gym.make("FrozenLake-v0")
-    # env = gym.make("blokus:blokus-v0")
+    env = gym.make("CartPole-v0")
+    # env = gym.make("blokus:blokus-simple-v0")
     memory_size = 1000
-    num_episodes = 10000
+    num_episodes = 5000
 
     batch_size = 32
     # gamma = 0.999
     learning_rate = 0.001
     model_filename = "blokus"
 
-    dist_params = {"num_bins": 51, "v_min": 0.0, "v_max": 1.0}
-    prioritized_params = {"a": 0.2, "b": 0.6, "eps": 1e-5}
-    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, nsteps=None,
-                  is_double=False, is_dueling=False, is_noisy=False, is_distributional=False, distr_params=dist_params,
+    dist_params = {"num_bins": 51, "v_min": 0.0, "v_max": 200.0}
+    prioritized_params = {"a": 0.6, "b": 0.6, "eps": 1e-5}
+    agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename, nsteps=3,
+                  is_double=True, is_dueling=True, is_noisy=True, is_distributional=True, distr_params=dist_params,
                   is_prioritized=True, prioritized_params=prioritized_params)
     agent.train()
     # for i in range(10):
