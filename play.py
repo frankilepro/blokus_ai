@@ -22,7 +22,6 @@ if __name__ == "__main__":
             action = random.randint(0, 918)
             observation, reward, done, info = env.step(action)
             # print(reward)
-            # print(reward)
 
     print(f"Starter won {env.starter_won / env.games_played * 100:.2f}%")
     env.close()
