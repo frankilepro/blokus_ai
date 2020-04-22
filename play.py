@@ -14,7 +14,7 @@ if __name__ == "__main__":
             observation, reward, done, info = env.step(action)
             env.render("human")
             # print(env.ai.all_ids_to_move.keys())
-            # print(reward)
+            print(reward)
 
             if done:
                 # print(env.ai.all_ids_to_move.keys())

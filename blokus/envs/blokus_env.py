@@ -30,7 +30,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-    rewards = {'won': 2, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -2}
+    rewards = {'won': 20, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -20}
     STATES_FOLDER = "states"
 
     # Customization available by base classes
@@ -116,7 +116,7 @@ class BlokusEnv(gym.Env):
             else:
                 reward = self.rewards['lost']
         else:
-            reward = self.rewards['default']
+            reward = self.rewards['default'] if self.ai.next_move is None else self.ai.next_move.size
         return done, reward
 
     def reset(self):
