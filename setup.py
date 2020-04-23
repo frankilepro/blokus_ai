@@ -1,6 +1,6 @@
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Build import cythonize, build_ext
+from Cython.Build import build_ext
 
 
 ext_modules = [
@@ -25,13 +25,14 @@ setup(
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
     url='https://github.com/frankilepro/blokus-ai',
-    download_url='https://github.com/frankilepro/blokus-ai/archive/v0.12.tar.gz',
+    # download_url='https://github.com/frankilepro/blokus-ai/archive/v0.12.tar.gz',
     keywords=['blokus', 'board game', 'block us'],
     install_requires=[
         'gym',
         'numpy',
         'matplotlib',
-        'torch'
+        'torch',
+        'Cython'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
