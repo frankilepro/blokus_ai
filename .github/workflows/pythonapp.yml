@@ -48,10 +48,11 @@ jobs:
       shell: pwsh
       run: |
         Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { 
-          pylint -s n $_
-          if (!$?) {
-            throw "something went wrong"
+          $diff = pylint -s n $_
+          if ($diff -ne $null) {
+            throw $diff
           }
+          Write-Host $_
         }
     # - name: PyLint
     #   shell: bash
