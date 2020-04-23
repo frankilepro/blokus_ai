@@ -70,7 +70,7 @@ class BlokusEnv(gym.Env):
         while self.blokus_game.next_player() != self.ai:
             self.__next_player_play()  # Let bots start
 
-    def steps(self, action_id):
+    def step(self, action_id):
         self.ai.next_move = self.all_possible_indexes_to_moves[action_id]
 
         done, reward = self.__next_player_play()  # Let ai play
