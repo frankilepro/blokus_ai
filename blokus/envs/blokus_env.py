@@ -6,8 +6,8 @@ import itertools
 from functools import partial
 import os
 import matplotlib.pyplot as plt
-import cython
 import gym
+import cython
 from blokus.envs.game.blokus_game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
 from blokus.envs.game.board import Board
