@@ -31,7 +31,7 @@ jobs:
     - name: PyLint
       if: runner.os == 'Windows'
       run: |
-        Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { pylint -s n $_; if (!$?) { $failed=$true }}; if ($failed) { exit 1 }
+        Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { Write-Host $_; pylint -s n $_; if (!$?) { $failed=$true }}; if ($failed) { exit 1 }
     - name: PyLint with pylint on ${{ matrix.runs-on }}
       if: runner.os == 'Linux'
       run: |
