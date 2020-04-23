@@ -110,7 +110,7 @@ class Player:
                 self.corners = {(i, j) for (i, j) in self.corners if self.game.board.tensor[j][i] == 0}
 
         # Check the corners before proceeding.
-        check_corners(no_restrictions)
+        check_corners(no_restriction)
         # This list of placements will be updated with valid ones.
         placements = set()
         # Loop through every available corner.
