@@ -2,7 +2,7 @@
 # from distutils.extension import Extension
 from setuptools import setup, Extension
 from Cython.Build import build_ext, cythonize
-import pkg_resources
+import os
 
 
 ext_modules = [
@@ -23,7 +23,7 @@ for e in ext_modules:
 setup(
     name='blokus',
     packages=['blokus'],
-    version=f'{float(pkg_resources.get_distribution("blokus").version) + 0.01:.2f}',
+    version=os.environ['BLOKUS_VERSION'],
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
     url='https://github.com/frankilepro/blokus-ai',
