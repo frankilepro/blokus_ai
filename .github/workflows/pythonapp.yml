@@ -28,14 +28,14 @@ jobs:
         pip install -r requirements.txt
         pip install pylint autopep8 mypy
 
-    # - name: PyLint
-    #   if: runner.os == 'Windows'
-    #   run: |
-    #     Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { Write-Host $_; pylint -s n $_; if (!$?) { $failed=$true }}; if ($failed) { exit 1 }
     - name: PyLint
-      shell: bash
+      shell: pwsh
       run: |
-        cd blokus && find . -type f -name "*.py" | xargs python3 -m pylint -s n
+        Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { Write-Host $_; pylint -s n $_; if (!$?) { $failed=$true }}; if ($failed) { exit 1 }
+    # - name: PyLint
+    #   shell: bash
+    #   run: |
+    #     cd blokus && find . -type f -name "*.py" | xargs python3 -m pylint -s n
 
     # - name: AutoPep8 on ${{ matrix.runs-on }}
     #   if: runner.os == 'Windows'
