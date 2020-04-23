@@ -35,7 +35,7 @@ jobs:
     - name: PyLint
       shell: bash
       run: |
-        cd blokus && find . -type f -name "*.py" | xargs python3 -m pylint -s n
+        cd blokus && find . -type f -name "*.py" | xargs pylint -s n
 
     # - name: AutoPep8 on ${{ matrix.runs-on }}
     #   if: runner.os == 'Windows'
@@ -44,7 +44,7 @@ jobs:
     # - name: AutoPep8 on ${{ matrix.runs-on }}
     #   if: runner.os == 'Linux'
     #   run: |
-    #     changes=$(python3 -m autopep8 --recursive --diff --aggressive blokus); if [[ $changes ]]; then echo "$changes" && exit 1; fi
+    #     changes=$(autopep8 --recursive --diff --aggressive blokus); if [[ $changes ]]; then echo "$changes" && exit 1; fi
 
     # - name: Mypy
     #   run: |
