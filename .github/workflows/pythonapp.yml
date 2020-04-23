@@ -23,7 +23,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - uses: actions/cache@v1
-    - name: Cache on ${{ matrix.runs-on }}
       if: runner.os == 'Linux'
       with:
         path: ~/.cache/pip
@@ -32,7 +31,6 @@ jobs:
           ${{ runner.os }}-pip-
 
     - uses: actions/cache@v1
-    - name: Cache on ${{ matrix.runs-on }}
       if: runner.os == 'Windows'
       with:
         path: ~\AppData\Local\pip\Cache
