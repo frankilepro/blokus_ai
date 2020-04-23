@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import os
 import numpy as np
 import torch
 
@@ -38,11 +37,11 @@ class Board:
         Returns a boolean for whether a move is overlapping
         any pieces that have already been placed on the board.
         """
-        return any(self.tensor[y][x] != 0 for x, y in points)
+        return any(self.tensor[y][x].item() != 0 for x, y in points)
 
     def is_player_tile(self, player, point):
         x, y = point
-        return self.in_bounds((x, y)) and self.tensor[y][x] == player.index
+        return self.in_bounds((x, y)) and self.tensor[y][x].item() == player.index
 
     def corner(self, player, move):
         """
@@ -64,9 +63,9 @@ class Board:
                    self.is_player_tile(player, (x - 1, y)) or self.is_player_tile(player, (x + 1, y))
                    for x, y in move.points)
 
-    def print_board(self, num=None, mode="human"):
+    def print_board(self, mode="human"):
         if mode == "human":
-            self.fancyBoard(num)
+            self.fancy_board()
         elif mode == "minimal":
             self.print_board_min()
         elif mode == "tensor":
@@ -82,7 +81,7 @@ class Board:
         coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
         print(f"Coverage: {coverage:.2f}%")
 
-    def fancyBoard(self, num):
+    def fancy_board(self):
         plt.clf()
 
         colors = {0: "lightgrey", 1: "red", 2: "blue", 3: "yellow", 4: "green"}

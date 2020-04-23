@@ -19,23 +19,23 @@ class BlokusGame:
         """
         if any(p.remains_move for p in self.players):
             return None
-        else:
-            winners = []
-            winner_score = 0
-            for player in self.players:
-                if player.score > winner_score:
-                    winners = [player.name]
-                    winner_score = winner_score
-                elif player.score == winner_score:
-                    winners.append(player.name)
-            return winners
+
+        winners = []
+        winner_score = 0
+        for player in self.players:
+            if player.score > winner_score:
+                winners = [player.name]
+                winner_score = player.score
+            elif player.score == winner_score:
+                winners.append(player.name)
+        return winners
 
     def valid_move(self, player, move):
         """
         Uses functions from the board to see whether
         a player's proposed move is valid.
         """
-        # if move.ID not in player.all_ids_to_move:
+        # if move.id not in player.all_ids_to_move:
         #     return False
 
         if any(not self.board.in_bounds(pt) for pt in move.points):
