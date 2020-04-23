@@ -23,6 +23,7 @@ jobs:
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        BLOKUS_VERSION: ${{ github.ref.split(".")[2] }} # i.e.: v0.21
       run: |
-        BLOKUS_VERSION=${{ github.ref }} python setup.py sdist bdist_wheel
+        python setup.py sdist bdist_wheel
         twine upload dist/*
