@@ -206,19 +206,23 @@ class DistributionalNetwork(nn.Module):
 class NoisyDuelingDistributionalNetwork(nn.Module):
     def __init__(self, in_dim, out_dim, distr_params):
         super(NoisyDuelingDistributionalNetwork, self).__init__()
-        self.input_layer = nn.Sequential(nn.Linear(in_dim, 256),
+        self.input_layer = nn.Sequential(nn.Conv2d(1, 32, kernel_size=3, stride=1),
+                                         nn.ReLU(),
+                                         nn.Conv2d(32, 64, kernel_size=3, stride=1),
+                                         nn.ReLU(),
+                                         nn.Conv2d(64, 64, kernel_size=3, stride=1),
                                          nn.ReLU())
         self.in_dim = in_dim
         self.out_dim = out_dim
         self.num_bins = distr_params["num_bins"]
         self.v_range = distr_params["v_range"]
-        self.advantage_layer_hidden = NoisyLayer(256, 256)
-        self.advantag_act = nn.ReLU()
-        self.advantage_layer_out = NoisyLayer(256, out_dim * self.num_bins)
+        self.advantage_layer_hidden = NoisyLayer(64, 64)
+        self.advantage_act = nn.ReLU()
+        self.advantage_layer_out = NoisyLayer(64, out_dim * self.num_bins)
 
-        self.value_layer_hidden = NoisyLayer(256, 256)
+        self.value_layer_hidden = NoisyLayer(64, 64)
         self.value_layer_act = nn.ReLU()
-        self.value_layer_out = NoisyLayer(256, self.num_bins)
+        self.value_layer_out = NoisyLayer(64, self.num_bins)
 
         self.custom_softmax = LegalSoftmax()
         self.softmax = nn.Softmax(dim=2)
@@ -231,14 +235,15 @@ class NoisyDuelingDistributionalNetwork(nn.Module):
         self.value_layer_out.update_noise()
 
     def action_distr(self, x, possible_moves):
-        x = self.input_layer(x)
+        batch_size = x.shape[0]
+        x = self.input_layer(x.unsqueeze(1))
 
         # Advantage
-        advantage = self.advantage_layer_hidden(x)
-        advantage = self.advantag_act(advantage)
+        advantage = self.advantage_layer_hidden(x.view(batch_size, -1))
+        advantage = self.advantage_act(advantage)
 
         # Value
-        value = self.value_layer_hidden(x)
+        value = self.value_layer_hidden(x.view(batch_size, -1))
         value = self.value_layer_act(value)
 
         advantage = self.advantage_layer_out(advantage).reshape(-1, self.out_dim, self.num_bins)

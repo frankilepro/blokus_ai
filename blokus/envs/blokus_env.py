@@ -25,7 +25,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 class BlokusEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-    rewards = {'won': 20, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -20}
+    rewards = {'won': 1, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -1}
     STATES_FOLDER = "states"
 
     # Customization available by base classes
@@ -57,11 +57,11 @@ class BlokusEnv(gym.Env):
         self.action_space.sample = self.ai_sample_possible_index
 
         self.ai = AiPlayer(1, "ai", self.all_possible_indexes_to_moves, self.blokus_game)
-        bots = [GreedyPlayer(id, f"bot_{id}", self.all_possible_indexes_to_moves,
-                             self.blokus_game, deterministic=True)
+        bots = [RandomPlayer(id, f"bot_{id}", self.all_possible_indexes_to_moves,
+                             self.blokus_game, deterministic=False)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
-        # random.shuffle(ordering)
+        random.shuffle(ordering)
         for player in ordering:
             self.blokus_game.add_player(player)
 
@@ -112,7 +112,9 @@ class BlokusEnv(gym.Env):
             else:
                 reward = self.rewards['lost']
         else:
-            reward = self.rewards['default'] if self.ai.next_move is None else self.ai.next_move.size
+            # reward = self.rewards['default'] if self.ai.next_move is None else self.ai.next_move.size
+            reward = self.rewards['default']
+
         return done, reward
 
     def reset(self):
