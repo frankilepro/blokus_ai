@@ -47,7 +47,7 @@ jobs:
     - name: PyLint
       shell: pwsh
       run: |
-        pylint -s n blokus/envs/blokus_env.py
+        pylint blokus
         Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { 
           $diff = pylint -s n $_
           if ($diff -ne $null) {
