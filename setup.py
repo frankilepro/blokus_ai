@@ -1,8 +1,7 @@
-# from distutils.core import setup
-# from distutils.extension import Extension
+import os
+import pkg_resources
 from setuptools import setup, Extension
 from Cython.Build import build_ext, cythonize
-import os
 
 
 ext_modules = [
@@ -20,14 +19,24 @@ ext_modules = [
 for e in ext_modules:
     e.cython_directives = {'language_level': "3"}
 
+if 'BLOKUS_VERSION' in os.environ:
+    version = os.environ['BLOKUS_VERSION'].split("/")[-1]  # i.e.: v0.21
+    cython_params = {}
+else:
+    version = pkg_resources.get_distribution("blokus").version
+    cython_params = {
+        'ext_modules': cythonize(ext_modules),
+        'build_ext': build_ext
+    }
+
 setup(
     name='blokus',
     packages=['blokus'],
-    version=os.environ['BLOKUS_VERSION'].split("/")[-1],  # i.e.: v0.21
+    version=version,
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
-    url='https://github.com/frankilepro/blokus-ai',
-    # download_url='https://github.com/frankilepro/blokus-ai/archive/v0.12.tar.gz',
+    url='https://github.com/frankilepro/blokus_ai',
+    download_url=f'https://github.com/frankilepro/blokus-ai/archive/{version}.tar.gz',
     keywords=['blokus', 'board game', 'block us'],
     install_requires=[
         'gym',
@@ -42,8 +51,5 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3.7',
     ],
-    ext_modules=cythonize(ext_modules),
-    build_ext=build_ext
-    # cmdclass={'build_ext': build_ext},
-    # ext_modules=ext_modules,
+    **cython_params
 )
