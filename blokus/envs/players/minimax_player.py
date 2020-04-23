@@ -1,5 +1,43 @@
-from player import eval_move
+# pylint: skip-file
 import copy
+
+
+def eval_move(piece, player, game, weights):
+    """
+    Takes in a single Piece object and a Player object and returns a integer score that
+    evaluates how "good" the Piece move is. Defined here because used by both Greedy and Minimax.
+    """
+    def check_corners(player):
+        """
+        Updates the corners of the player in the test board (copy), in case the
+        corners have been covered by another player's pieces.
+        """
+        player.corners = set([(i, j) for (i, j) in player.corners if test_board.tensor[j][i] == 0])
+    # get board
+    board = game.board
+    # create a copy of the players in the game
+    test_players = copy.deepcopy(game.players)
+    # create a list of the opponents in the game
+    opponents = [opponent for opponent in test_players if opponent.index != player.index]
+    # create a copy of the board
+    test_board = copy.deepcopy(board)
+    # update the copy of the board with the Piece placement
+    test_board.update(player, piece)
+    # create a copy of the player currently playing
+    test_player = copy.deepcopy(player)
+    # update the current player (update corners) with the current Piece placement
+    test_player.update_player(piece, test_board)
+    # calculate how many corners the current player has
+    my_corners = len(test_player.corners)
+    # update the corners for all opponents
+    list(map(check_corners, opponents))
+    # calculate the mean of the corners of the opponents
+    opponent_corners = [len(opponent.corners) for opponent in opponents]
+    # find the difference between the number of corners the current player has and and the
+    # mean number of corners the opponents have
+    corner_difference = np.mean([my_corners - opponent_corner for opponent_corner in opponent_corners])
+    # return the score = size + difference in the number of corners
+    return (piece, weights[0] * piece.size + weights[1] * corner_difference)
 
 
 def Minimax_Player(player, game, weights):
@@ -52,7 +90,7 @@ def Minimax_Player(player, game, weights):
             # create a copy of the pieces that the current player has
             piece_copies = copy.deepcopy(shape_options)
             # remove the Piece that was just placed on the board
-            piece_copies = [p for p in piece_copies if p.ID != piece.ID]
+            piece_copies = [p for p in piece_copies if p.id != piece.id]
             # OPPONENTS' TURN TO PLACE PIECE
             # for each opponent:
             for opponent in opponents:

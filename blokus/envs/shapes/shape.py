@@ -1,4 +1,3 @@
-import math
 import numpy as np
 
 
@@ -7,7 +6,7 @@ class Shape:
     A class that defines the functions associated
     with a shape.
     """
-    ID = ""
+    id = ""
     points = []  # TODO optimize, but not this important since max 5 points
     corners = []  # TODO optimize, same
     idx = -1
@@ -30,10 +29,10 @@ class Shape:
         np_points = np.array(self.points)
         np_corners = np.array(self.corners)
 
-        np_points = (np_points - self.ref_point) @ self.rotation_matrix + self.ref_point
+        np_points = (np_points - np_ref) @ self.rotation_matrix + np_ref
         self.points = list(map(tuple, np_points))
 
-        np_corners = (np_corners - self.ref_point) @ self.rotation_matrix + self.ref_point
+        np_corners = (np_corners - np_ref) @ self.rotation_matrix + np_ref
         self.corners = list(map(tuple, np_corners))
 
     def flip(self):
@@ -58,7 +57,7 @@ class Shape:
     @staticmethod
     def from_json(obj):
         shape = Shape()
-        shape.ID = obj["ID"]
+        shape.id = obj["id"]
         shape.points = list(map(tuple, obj["points"]))  # TODO optimize
         shape.corners = list(map(tuple, obj["corners"]))  # TODO optimize
         shape.idx = obj["idx"]
@@ -68,7 +67,7 @@ class Shape:
     def to_json(self, idx):
         self.idx = idx
         return {
-            'ID': self.ID,
+            'id': self.id,
             'points': [(int(x), int(y)) for x, y in self.points],
             'corners': [(int(x), int(y)) for x, y in self.corners],
             'idx': self.idx
@@ -87,4 +86,4 @@ class Shape:
         return hash(str(sorted(self.points)))
 
     def __str__(self):
-        return "\n".join([f"Id: {self.ID}", f"Points: {sorted(self.points)}"])
+        return "\n".join([f"Id: {self.id}", f"Points: {sorted(self.points)}"])

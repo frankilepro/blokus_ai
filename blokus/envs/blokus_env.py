@@ -1,26 +1,21 @@
 # Class structure follows: https://github.com/openai/gym/blob/master/docs/creating-environments.md
 # Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
 import json
-import numpy as np
 import multiprocessing as mp
 import itertools
 from functools import partial
+import os
 import matplotlib.pyplot as plt
+import cython
+import gym
 from blokus.envs.game.blokus_game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
 from blokus.envs.game.board import Board
 from blokus.envs.players.ai_player import AiPlayer
-from blokus.envs.players.random_player import RandomPlayer
 from blokus.envs.players.greedy_player import GreedyPlayer
 from blokus.envs.players.player import Player
 from blokus.envs.shapes.shape import Shape
 from blokus.envs.shapes.shapes import get_all_shapes
-from gym.utils import seeding
-from gym import error, spaces, utils
-import os
-import cython
-import gym
-import random
 
 
 def possible_moves_func(dummy, board_size, pieces):
@@ -55,9 +50,10 @@ class BlokusEnv(gym.Env):
         standard_size = Board(self.BOARD_SIZE)
         self.blokus_game = BlokusGame(standard_size, self.all_shapes)
 
-        self.observation_space = spaces.Box(0, self.NUMBER_OF_PLAYERS, (self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
+        self.observation_space = gym.spaces.Box(0, self.NUMBER_OF_PLAYERS,
+                                                (self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
         self.__set_all_possible_moves()
-        self.action_space = spaces.Discrete(len(self.all_possible_indexes_to_moves))
+        self.action_space = gym.spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
         self.ai = AiPlayer(1, "ai", self.all_possible_indexes_to_moves, self.blokus_game)

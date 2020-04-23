@@ -1,44 +1,5 @@
 import copy
-import numpy as np
 import random
-
-
-def eval_move(piece, player, game, weights):
-    """
-    Takes in a single Piece object and a Player object and returns a integer score that
-    evaluates how "good" the Piece move is. Defined here because used by both Greedy and Minimax.
-    """
-    def check_corners(player):
-        """
-        Updates the corners of the player in the test board (copy), in case the
-        corners have been covered by another player's pieces.
-        """
-        player.corners = set([(i, j) for (i, j) in player.corners if test_board.tensor[j][i] == 0])
-    # get board
-    board = game.board
-    # create a copy of the players in the game
-    test_players = copy.deepcopy(game.players)
-    # create a list of the opponents in the game
-    opponents = [opponent for opponent in test_players if opponent.index != player.index]
-    # create a copy of the board
-    test_board = copy.deepcopy(board)
-    # update the copy of the board with the Piece placement
-    test_board.update(player, piece)
-    # create a copy of the player currently playing
-    test_player = copy.deepcopy(player)
-    # update the current player (update corners) with the current Piece placement
-    test_player.update_player(piece, test_board)
-    # calculate how many corners the current player has
-    my_corners = len(test_player.corners)
-    # update the corners for all opponents
-    list(map(check_corners, opponents))
-    # calculate the mean of the corners of the opponents
-    opponent_corners = [len(opponent.corners) for opponent in opponents]
-    # find the difference between the number of corners the current player has and and the
-    # mean number of corners the opponents have
-    corner_difference = np.mean([my_corners - opponent_corner for opponent_corner in opponent_corners])
-    # return the score = size + difference in the number of corners
-    return (piece, weights[0] * piece.size + weights[1] * corner_difference)
 
 
 class Player:
@@ -48,26 +9,28 @@ class Player:
         self.corners = set()
         self.score = 0
         self.game = game
-        self.rng = random.Random(0) if deterministic else random
+        self.rng = random.Random(0)
+        if not deterministic:
+            self.rng.seed()
         self.__set_all_ids_to_move(all_moves)
 
     def __set_all_ids_to_move(self, all_moves):
         self.all_ids_to_move = {}
         for move in all_moves:
-            if move.ID not in self.all_ids_to_move:
-                self.all_ids_to_move[move.ID] = []
-            self.all_ids_to_move[move.ID].append(move)
+            if move.id not in self.all_ids_to_move:
+                self.all_ids_to_move[move.id] = []
+            self.all_ids_to_move[move.id].append(move)
 
         # For performance issue, we shuffle first, then we look "in order" to find the first move
         # in casses when we want to sample a random move
-        for key in self.all_ids_to_move.keys():
+        for key in self.all_ids_to_move:
             self.rng.shuffle(self.all_ids_to_move[key])
 
     def add_pieces(self, pieces):
         """
         Gives a player the initial set of pieces.
         """
-        piece_ids = set(p.ID for p in pieces)
+        piece_ids = set(p.id for p in pieces)
         for missing_piece_id in self.all_ids_to_move.keys() - piece_ids:
             self.all_ids_to_move.remove(missing_piece_id)
 
@@ -82,7 +45,7 @@ class Player:
         Removes a given piece (Shape object) from
         the list of pieces a player has.
         """
-        del self.all_ids_to_move[piece.ID]
+        del self.all_ids_to_move[piece.id]
 
     def update_player(self, placement, board):
         """
@@ -144,10 +107,10 @@ class Player:
                     for j in range(-6, board_size + 6):
                         self.corners.add((i, j))
             else:
-                self.corners = set([(i, j) for (i, j) in self.corners if self.game.board.tensor[j][i] == 0])
+                self.corners = {(i, j) for (i, j) in self.corners if self.game.board.tensor[j][i] == 0}
 
         # Check the corners before proceeding.
-        check_corners(no_restriction)
+        check_corners(no_restrictions)
         # This list of placements will be updated with valid ones.
         placements = set()
         # Loop through every available corner.

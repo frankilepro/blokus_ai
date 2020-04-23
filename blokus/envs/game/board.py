@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import os
 import numpy as np
 import torch
 
@@ -64,9 +63,9 @@ class Board:
                    self.is_player_tile(player, (x - 1, y)) or self.is_player_tile(player, (x + 1, y))
                    for x, y in move.points)
 
-    def print_board(self, num=None, mode="human"):
+    def print_board(self, mode="human"):
         if mode == "human":
-            self.fancyBoard(num)
+            self.fancy_board()
         elif mode == "minimal":
             self.print_board_min()
         elif mode == "tensor":
@@ -82,7 +81,7 @@ class Board:
         coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
         print(f"Coverage: {coverage:.2f}%")
 
-    def fancyBoard(self, num):
+    def fancy_board(self):
         plt.clf()
 
         colors = {0: "lightgrey", 1: "red", 2: "blue", 3: "yellow", 4: "green"}

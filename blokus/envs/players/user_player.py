@@ -1,3 +1,6 @@
+# pylint: skip-file
+
+
 def User_Player(player, game):
     """
     User Player should input 2 things: piece and coordinate for the refpt.
@@ -24,9 +27,9 @@ def User_Player(player, game):
         return None
     while options == []:
         shape = (input("Choose a shape: ")).upper().strip()
-        while not (shape in [p.ID for p in player.pieces]):
-            print(("\nPlease enter a valid piece ID. Remember these are the pieces available to you: "
-                   + str([p.ID for p in player.pieces]) + "\n"))
+        while not (shape in [p.id for p in player.pieces]):
+            print(("\nPlease enter a valid piece id. Remember these are the pieces available to you: "
+                   + str([p.id for p in player.pieces]) + "\n"))
             shape = (input("Choose a shape: ")).upper()
         refpt = get_input()
         while not game.board.in_bounds((refpt[0], refpt[1])):
@@ -36,7 +39,7 @@ def User_Player(player, game):
             print("\nIt appears the point you chose overlaps with another piece! Please choose an empty square.\n")
             refpt = get_input()
         for piece in possibles:
-            if piece.ID == shape and piece.points[0][0] == refpt[0] and piece.points[0][1] == refpt[1]:
+            if piece.id == shape and piece.points[0][0] == refpt[0] and piece.points[0][1] == refpt[1]:
                 options.append(piece)
         if options == []:
             print("\nOh no! It appears you have chosen an invalid shape and reference point combination. Please try again!\n")
