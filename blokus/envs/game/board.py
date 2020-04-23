@@ -37,11 +37,11 @@ class Board:
         Returns a boolean for whether a move is overlapping
         any pieces that have already been placed on the board.
         """
-        return any(self.tensor[y][x] != 0 for x, y in points)
+        return any(self.tensor[y][x].item() != 0 for x, y in points)
 
     def is_player_tile(self, player, point):
         x, y = point
-        return self.in_bounds((x, y)) and self.tensor[y][x] == player.index
+        return self.in_bounds((x, y)) and self.tensor[y][x].item() == player.index
 
     def corner(self, player, move):
         """

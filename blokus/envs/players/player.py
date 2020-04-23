@@ -32,7 +32,7 @@ class Player:
         """
         piece_ids = set(p.id for p in pieces)
         for missing_piece_id in self.all_ids_to_move.keys() - piece_ids:
-            self.all_ids_to_move.remove(missing_piece_id)
+            del self.all_ids_to_move[missing_piece_id]
 
     def start_corner(self, p):
         """

@@ -1,4 +1,3 @@
-import random
 import numpy as np
 from blokus.envs.players.player import Player
 
@@ -38,4 +37,4 @@ class GreedyPlayer(Player):
             elif new_score == best_score:
                 best_moves.append(move)
 
-        return random.choice(best_moves)
+        return self.rng.choice(best_moves)

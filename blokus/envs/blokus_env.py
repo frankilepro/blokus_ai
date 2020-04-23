@@ -12,7 +12,7 @@ from blokus.envs.game.blokus_game import InvalidMoveByAi
 from blokus.envs.game.blokus_game import BlokusGame
 from blokus.envs.game.board import Board
 from blokus.envs.players.ai_player import AiPlayer
-from blokus.envs.players.greedy_player import GreedyPlayer
+from blokus.envs.players.random_player import RandomPlayer
 from blokus.envs.players.player import Player
 from blokus.envs.shapes.shape import Shape
 from blokus.envs.shapes.shapes import get_all_shapes
@@ -33,7 +33,7 @@ class BlokusEnv(gym.Env):
     BOARD_SIZE = 21
     STATES_FILE = "states.json"
     all_shapes = get_all_shapes()
-    # bot_type = "random"
+    bot_type = RandomPlayer
 
     def __init__(self):
         assert 2 <= self.NUMBER_OF_PLAYERS <= 4, "Between 2 and 3 players"
@@ -57,11 +57,11 @@ class BlokusEnv(gym.Env):
         self.action_space.sample = self.ai_sample_possible_index
 
         self.ai = AiPlayer(1, "ai", self.all_possible_indexes_to_moves, self.blokus_game)
-        bots = [GreedyPlayer(id, f"bot_{id}", self.all_possible_indexes_to_moves,
-                             self.blokus_game, deterministic=False)
+        bots = [self.bot_type(id, f"bot_{id}", self.all_possible_indexes_to_moves,
+                              self.blokus_game, deterministic=False)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
-        random.shuffle(ordering)
+        # random.shuffle(ordering)
         for player in ordering:
             self.blokus_game.add_player(player)
 
@@ -122,7 +122,7 @@ class BlokusEnv(gym.Env):
         return self.blokus_game.board.tensor
 
     def render(self, mode='human'):
-        self.blokus_game.board.print_board(num=self.blokus_game.rounds, mode=mode)
+        self.blokus_game.board.print_board(mode=mode)
 
     def close(self):
         plt.close('all')
