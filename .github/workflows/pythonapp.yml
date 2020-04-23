@@ -10,8 +10,8 @@ jobs:
   lint:
     strategy:
       matrix:
-        python-version: [3.7]
-        runs-on: [ubuntu-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8]
+        runs-on: [ubuntu-latest]
 
     runs-on: ${{ matrix.runs-on }}
 
@@ -48,17 +48,14 @@ jobs:
       shell: pwsh
       run: |
         pylint blokus
-        Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { 
-          $diff = pylint -s n $_
-          if ($diff -ne $null) {
-            throw $diff
-          }
-          Write-Host $_
+
+    - name: AutoPep8
+      shell: pwsh
+      run: |
+        $changes = autopep8 --recursive --diff --aggressive blokus
+        if($changes -ne $null) {
+          throw $changes
         }
-    # - name: PyLint
-    #   shell: bash
-    #   run: |
-    #     cd blokus && find . -type f -name "*.py" | xargs pylint -s n && exit 1
 
     # - name: AutoPep8 on ${{ matrix.runs-on }}
     #   if: runner.os == 'Windows'
@@ -69,6 +66,7 @@ jobs:
     #   run: |
     #     changes=$(autopep8 --recursive --diff --aggressive blokus); if [[ $changes ]]; then echo "$changes" && exit 1; fi
 
-    # - name: Mypy
-    #   run: |
-    #     mypy --config-file=mypy.ini blokus
+    - name: Mypy
+      shell: pwsh
+      run: |
+        mypy blokus
