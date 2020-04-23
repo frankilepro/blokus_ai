@@ -26,7 +26,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pylint
+        pip install pylint autopep8 mypy
 
     - name: PyLint
       if: runner.os == 'Windows'
@@ -40,8 +40,12 @@ jobs:
     - name: AutoPep8
       if: runner.os == 'Windows'
       run: |
-        Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { autopep8 --recursive --diff --aggressive $_; if (!$?) { $failed=$true }}; if ($failed) { exit 1 }
+        $changes=(autopep8 --recursive --diff --aggressive blokus); if($changes -ne $null) { Write-Host $changes; exit 1 }
     - name: AutoPep8
       if: runner.os == 'Linux'
       run: |
-        cd blokus && changes=$(python3 -m autopep8 --recursive --diff --aggressive *.py); if [[ $changes ]]; then echo "$changes" && exit 1; fi
+        changes=$(python3 -m autopep8 --recursive --diff --aggressive blokus); if [[ $changes ]]; then echo "$changes" && exit 1; fi
+
+    - name: Mypy
+      run: |
+        mypy --config-file=mypy.ini blokus

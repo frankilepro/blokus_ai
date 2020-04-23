@@ -2,6 +2,10 @@ import copy
 import random
 
 
+
+
+
+
 class Player:
     def __init__(self, index, name, all_moves, game, deterministic=False):
         self.index = index
