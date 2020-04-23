@@ -22,20 +22,36 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - uses: actions/cache@v1
+      if: runner.os == 'Linux'
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - uses: actions/cache@v1
+      if: runner.os == 'Windows'
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pylint autopep8 mypy
 
-    # - name: PyLint
-    #   shell: pwsh
-    #   run: |
-    #     Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { Write-Host $_; pylint -s n $_; if (!$?) { $failed=$true }}; if ($failed) { exit 1 }
     - name: PyLint
-      shell: bash
+      shell: pwsh
       run: |
-        cd blokus && find . -type f -name "*.py" | xargs pylint -s n && exit 1
+        Get-ChildItem "blokus/**/*.py" -Recurse | ForEach-Object { pylint -s n $_; if (!$?) { exit 127 }};
+    # - name: PyLint
+    #   shell: bash
+    #   run: |
+    #     cd blokus && find . -type f -name "*.py" | xargs pylint -s n && exit 1
 
     # - name: AutoPep8 on ${{ matrix.runs-on }}
     #   if: runner.os == 'Windows'
