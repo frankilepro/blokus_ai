@@ -6,31 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class DQNConv(nn.Module):
-    def __init__(self, in_dim, out_dim):
-        super(DQNConv, self).__init__()
-
-        self.layers = nn.Sequential(nn.Conv2d(1, 32, kernel_size=3, stride=1),
-                                    nn.ReLU(),
-                                    nn.Conv2d(32, 64, kernel_size=3, stride=1),
-                                    nn.ReLU(),
-                                    nn.Conv2d(64, 64, kernel_size=3, stride=1),
-                                    nn.ReLU()
-                                    )
-        self.rectify = nn.Linear(64, out_dim)
-        # Softmax only on valid moves
-        self.custom_softmax = LegalSoftmax()
-
-    def forward(self, x, possible_moves):
-        batch_size = x.shape[0]
-        x = self.layers(x.unsqueeze(1))
-        x = self.rectify(x.view(batch_size, -1))
-        # return nn.Softmax(1)(x)
-        return self.custom_softmax(x, possible_moves)
-
-
 class DQN(nn.Module):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, params=None, is_noisy=None):
         super(DQN, self).__init__()
 
         self.layers = nn.Sequential(nn.Linear(in_dim, 256),
@@ -39,13 +16,11 @@ class DQN(nn.Module):
                                     nn.ReLU(),
                                     nn.Linear(256, out_dim))
         # Softmax only on valid moves
-        # self.custom_softmax = LegalSoftmax()
+        self.custom_softmax = LegalSoftmax()
 
     def forward(self, x, possible_moves):
         x = self.layers(x)
-        return x
-        # return nn.Softmax(1)(x)
-        # return self.custom_softmax(x, possible_moves)
+        return self.custom_softmax(x, possible_moves)
 
 
 class LegalSoftmax(nn.Module):
@@ -68,7 +43,7 @@ class LegalSoftmax(nn.Module):
 
 
 class DuelingNetwork(nn.Module):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, params=None, is_noisy=False):
         super(DuelingNetwork, self).__init__()
         self.input_layer = nn.Sequential(nn.Linear(in_dim, 24),
                                          nn.ReLU())
@@ -89,30 +64,32 @@ class DuelingNetwork(nn.Module):
 
 
 class NoisyNetwork(nn.Module):
-    def __init__(self, in_dim, out_dim, sigma_init=0.4):
+    def __init__(self, in_dim, out_dim, params=None, is_noisy=False):
         super(NoisyNetwork, self).__init__()
         self.input_layer = nn.Sequential(nn.Linear(in_dim, 24),
                                          nn.ReLU())
-        self.hidden_noisy_layer = NoisyLayer(24, 24, sigma_init)
-        self.output_noisy_layer = NoisyLayer(24, out_dim, sigma_init)
+        self.hidden_noisy_layer = NoisyLayer(24, 24)
+        self.output_noisy_layer = NoisyLayer(24, out_dim)
+        self.custom_softmax = LegalSoftmax()
 
     def update_noise(self):
         self.hidden_noisy_layer.update_noise()
         self.output_noisy_layer.update_noise()
 
-    def forward(self, x):
+    def forward(self, x, possible_moves):
         x = self.input_layer(x)
         x = nn.ReLU()(self.hidden_noisy_layer(x))
-        return self.output_noisy_layer(x)
+        x = self.output_noisy_layer(x)
+        return self.custom_softmax(x, possible_moves)
 
 
 # Inspired from https://github.com/Curt-Park/rainbow-is-all-you-need/blob/master/05.noisy_net.ipynb
 class NoisyLayer(nn.Module):
-    def __init__(self, in_dim, out_dim, sigma_init=0.5):
+    def __init__(self, in_dim, out_dim, params=None, is_noisy=False):
         super(NoisyLayer, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        self.sigma_init = sigma_init
+        self.sigma_init = 0.5
         self.mu_w = nn.Parameter(torch.Tensor(out_dim, in_dim))
         self.mu_b = nn.Parameter(torch.Tensor(out_dim))
         self.sigma_w = nn.Parameter(torch.Tensor(out_dim, in_dim))
@@ -144,7 +121,7 @@ class NoisyLayer(nn.Module):
 
 
 class NoisyDuelingNetwork(nn.Module):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, params=None, is_noisy=False):
         super(NoisyDuelingNetwork, self).__init__()
         self.input_layer = nn.Sequential(nn.Linear(in_dim, 256),
                                          nn.ReLU())
@@ -155,7 +132,6 @@ class NoisyDuelingNetwork(nn.Module):
         self.value_layer_hidden = NoisyLayer(256, 256)
         self.value_layer_act = nn.ReLU()
         self.value_layer_out = NoisyLayer(256, 1)
-
         self.custom_softmax = LegalSoftmax()
 
     def update_noise(self):
@@ -178,53 +154,72 @@ class NoisyDuelingNetwork(nn.Module):
         value = self.value_layer_act(value)
         value = self.value_layer_out(value)
 
-        return advantage + value - advantage.mean()
+        return self.custom_softmax(advantage + value - advantage.mean(), possible_moves)
 
 
 class DistributionalNetwork(nn.Module):
-    def __init__(self, in_dim, out_dim, distr_params):
+    def __init__(self, in_dim, out_dim, distr_params, is_noisy):
         super(DistributionalNetwork, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
         self.num_bins = distr_params["num_bins"]
         self.v_range = distr_params["v_range"]
-        self.layers = nn.Sequential(nn.Linear(in_dim, 24),
-                                    nn.ReLU(),
-                                    nn.Linear(24, 24),
-                                    nn.ReLU(),
-                                    nn.Linear(24, self.out_dim * self.num_bins))
+        if is_noisy:
+            self.layers = nn.Sequential(nn.Linear(in_dim, 256),
+                                        nn.ReLU())
+            self.hidden_layer = NoisyLayer(256, 256)
+            self.hidden_act = nn.ReLU()
+            self.output = NoisyLayer(256, self.out_dim * self.num_bins)
+        else:
+            self.layers = nn.Sequential(nn.Linear(in_dim, 256),
+                                        nn.ReLU())
+            self.hidden_layer = nn.Linear(256, 256)
+            self.hidden_act = nn.ReLU()
+            self.output = nn.Linear(256, self.out_dim * self.num_bins)
+        self.custom_softmax = LegalSoftmax()
 
-    def action_distr(self, x, env):
+    def action_distr(self, x):
         x = self.layers(x)
+        x = self.hidden_layer(x)
+        x = self.output(x)
         x = x.reshape(-1, self.out_dim, self.num_bins)
         return nn.Softmax(dim=2)(x).clamp(1e-5)
 
-    def forward(self, x, env):
-        return torch.sum(self.action_distr(x, env) * self.v_range, dim=2)
+    def update_noise(self):
+        self.hidden_layer.update_noise()
+        self.output.update_noise()
+
+    def forward(self, x, possible_moves):
+        x = torch.sum(self.action_distr(x) * self.v_range, dim=2)
+        return self.custom_softmax(x, possible_moves)
 
 
-class NoisyDuelingDistributionalNetwork(nn.Module):
-    def __init__(self, in_dim, out_dim, distr_params):
-        super(NoisyDuelingDistributionalNetwork, self).__init__()
-        self.input_layer = nn.Sequential(nn.Conv2d(1, 32, kernel_size=3, stride=1),
-                                         nn.ReLU(),
-                                         nn.Conv2d(32, 64, kernel_size=3, stride=1),
-                                         nn.ReLU(),
-                                         nn.Conv2d(64, 64, kernel_size=3, stride=1),
+class DuelingDistributionalNetwork(nn.Module):
+    def __init__(self, in_dim, out_dim, distr_params, is_noisy):
+        super(DuelingDistributionalNetwork, self).__init__()
+        self.input_layer = nn.Sequential(nn.Linear(in_dim, 256),
                                          nn.ReLU())
         self.in_dim = in_dim
         self.out_dim = out_dim
         self.num_bins = distr_params["num_bins"]
         self.v_range = distr_params["v_range"]
-        self.advantage_layer_hidden = NoisyLayer(64, 64)
+        if is_noisy:
+            self.advantage_layer_hidden = NoisyLayer(256, 256)
+            self.advantage_layer_out = NoisyLayer(256, out_dim * self.num_bins)
+
+            self.value_layer_hidden = NoisyLayer(256, 256)
+            self.value_layer_out = NoisyLayer(256, self.num_bins)
+        else:
+            self.advantage_layer_hidden = nn.Linear(256, 256)
+            self.advantage_layer_out = nn.Linear(256, out_dim * self.num_bins)
+
+            self.value_layer_hidden = nn.Linear(256, 256)
+            self.value_layer_out = nn.Linear(256, self.num_bins)
+
         self.advantage_act = nn.ReLU()
-        self.advantage_layer_out = NoisyLayer(64, out_dim * self.num_bins)
-
-        self.value_layer_hidden = NoisyLayer(64, 64)
         self.value_layer_act = nn.ReLU()
-        self.value_layer_out = NoisyLayer(64, self.num_bins)
 
-        self.custom_softmax = LegalSoftmax()
+        self.custom_layer = LegalSoftmax()
         self.softmax = nn.Softmax(dim=2)
 
     def update_noise(self):
@@ -234,16 +229,15 @@ class NoisyDuelingDistributionalNetwork(nn.Module):
         self.value_layer_hidden.update_noise()
         self.value_layer_out.update_noise()
 
-    def action_distr(self, x, possible_moves):
-        batch_size = x.shape[0]
-        x = self.input_layer(x.unsqueeze(1))
+    def action_distr(self, x):
+        x = self.input_layer(x)
 
         # Advantage
-        advantage = self.advantage_layer_hidden(x.view(batch_size, -1))
+        advantage = self.advantage_layer_hidden(x)
         advantage = self.advantage_act(advantage)
 
         # Value
-        value = self.value_layer_hidden(x.view(batch_size, -1))
+        value = self.value_layer_hidden(x)
         value = self.value_layer_act(value)
 
         advantage = self.advantage_layer_out(advantage).reshape(-1, self.out_dim, self.num_bins)
@@ -260,4 +254,5 @@ class NoisyDuelingDistributionalNetwork(nn.Module):
         self.value_layer_out.update_noise()
 
     def forward(self, x, possible_moves):
-        return torch.sum(self.action_distr(x, possible_moves) * self.v_range, dim=2)
+        x = torch.sum(self.action_distr(x) * self.v_range, dim=2)
+        return self.custom_layer(x, possible_moves)
