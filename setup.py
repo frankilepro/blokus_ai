@@ -23,7 +23,7 @@ for e in ext_modules:
 setup(
     name='blokus',
     packages=['blokus'],
-    version=os.environ['BLOKUS_VERSION'].split("-")[-1],  # i.e.: v0.21
+    version=os.environ['BLOKUS_VERSION'].split("_")[-1],  # i.e.: v0.21
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
     url='https://github.com/frankilepro/blokus-ai',
