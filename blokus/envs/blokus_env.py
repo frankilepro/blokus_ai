@@ -118,6 +118,7 @@ class BlokusEnv(gym.Env):
         else:
             # reward = self.rewards['default'] if self.ai.next_move is None else self.ai.next_move.size
             reward = self.rewards['default']
+
         return done, reward
 
     def reset(self):

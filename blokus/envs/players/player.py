@@ -48,7 +48,6 @@ class Player:
         self.corners = set()
         self.score = 0
         self.game = game
-
         self.rng = random.Random(0) if deterministic else random
 
         self.__set_all_ids_to_move(all_moves)
