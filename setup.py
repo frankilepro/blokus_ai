@@ -1,16 +1,18 @@
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import build_ext
+# from distutils.core import setup
+# from distutils.extension import Extension
+from setuptools import setup, Extension
+from Cython.Build import build_ext, cythonize
+import pkg_resources
 
 
 ext_modules = [
     Extension("blokus.envs.blokus_env", ["blokus/envs/blokus_env.py"]),
-    Extension("blokus.envs.blokus_simple_env", ["blokus/envs/blokus_simple_env.py"]),
-    Extension("blokus.envs.blokus_duo_env", ["blokus/envs/blokus_duo_env.py"]),
-    Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
+    Extension("blokus.envs.blokus_envs", ["blokus/envs/blokus_envs.py"]),
     Extension("blokus.envs.shapes.shape", ["blokus/envs/shapes/shape.py"]),
+    Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
     Extension("blokus.envs.players.player", ["blokus/envs/players/player.py"]),
     Extension("blokus.envs.players.random_player", ["blokus/envs/players/random_player.py"]),
+    Extension("blokus.envs.players.greedy_player", ["blokus/envs/players/greedy_player.py"]),
     Extension("blokus.envs.game.blokus_game", ["blokus/envs/game/blokus_game.py"]),
     Extension("blokus.envs.game.board", ["blokus/envs/game/board.py"]),
 ]
@@ -21,7 +23,7 @@ for e in ext_modules:
 setup(
     name='blokus',
     packages=['blokus'],
-    version='0.12',
+    version=f'{float(pkg_resources.get_distribution("blokus").version) + 0.01:.2f}',
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
     url='https://github.com/frankilepro/blokus-ai',
@@ -40,6 +42,8 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3.7',
     ],
-    cmdclass={'build_ext': build_ext},
-    ext_modules=ext_modules,
+    ext_modules=cythonize(ext_modules),
+    build_ext=build_ext
+    # cmdclass={'build_ext': build_ext},
+    # ext_modules=ext_modules,
 )
