@@ -37,15 +37,15 @@ jobs:
       run: |
         cd blokus && find . -type f -name "*.py" | xargs python3 -m pylint -s n
 
-    - name: AutoPep8
-      if: runner.os == 'Windows'
-      run: |
-        $changes=(autopep8 --recursive --diff --aggressive blokus); if($changes -ne $null) { Write-Host $changes; exit 1 }
-    - name: AutoPep8
-      if: runner.os == 'Linux'
-      run: |
-        changes=$(python3 -m autopep8 --recursive --diff --aggressive blokus); if [[ $changes ]]; then echo "$changes" && exit 1; fi
+    # - name: AutoPep8
+    #   if: runner.os == 'Windows'
+    #   run: |
+    #     $changes=(autopep8 --recursive --diff --aggressive blokus); if($changes -ne $null) { Write-Host $changes; exit 1 }
+    # - name: AutoPep8
+    #   if: runner.os == 'Linux'
+    #   run: |
+    #     changes=$(python3 -m autopep8 --recursive --diff --aggressive blokus); if [[ $changes ]]; then echo "$changes" && exit 1; fi
 
-    - name: Mypy
-      run: |
-        mypy --config-file=mypy.ini blokus
+    # - name: Mypy
+    #   run: |
+    #     mypy --config-file=mypy.ini blokus
