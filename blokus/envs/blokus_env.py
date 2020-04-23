@@ -57,7 +57,7 @@ class BlokusEnv(gym.Env):
         self.action_space.sample = self.ai_sample_possible_index
 
         self.ai = AiPlayer(1, "ai", self.all_possible_indexes_to_moves, self.blokus_game)
-        bots = [RandomPlayer(id, f"bot_{id}", self.all_possible_indexes_to_moves,
+        bots = [GreedyPlayer(id, f"bot_{id}", self.all_possible_indexes_to_moves,
                              self.blokus_game, deterministic=False)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
