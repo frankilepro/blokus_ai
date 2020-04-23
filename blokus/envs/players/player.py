@@ -42,13 +42,15 @@ def eval_move(piece, player, game, weights):
 
 
 class Player:
-    def __init__(self, index, name, strategy, all_moves, game):
+    def __init__(self, index, name, all_moves, game, deterministic=False):
         self.index = index
         self.name = name
         self.corners = set()
-        self.strategy = strategy
         self.score = 0
         self.game = game
+
+        self.rng = random.Random(0) if deterministic else random
+
         self.__set_all_ids_to_move(all_moves)
 
     def __set_all_ids_to_move(self, all_moves):
@@ -61,7 +63,7 @@ class Player:
         # For performance issue, we shuffle first, then we look "in order" to find the first move
         # in casses when we want to sample a random move
         for key in self.all_ids_to_move.keys():
-            random.shuffle(self.all_ids_to_move[key])
+            self.rng.shuffle(self.all_ids_to_move[key])
 
     def add_pieces(self, pieces):
         """
@@ -97,7 +99,7 @@ class Player:
 
     def sample_move(self):
         keys = list(self.all_ids_to_move.keys())
-        random.shuffle(keys)
+        self.rng.shuffle(keys)
         nb = 0
         for key in keys:
             nb += 1
@@ -107,7 +109,8 @@ class Player:
         return None
 
     def sample_move_idx(self):
-        return self.sample_move().idx
+        move = self.sample_move()
+        return None if move is None else move.idx
 
     @property
     def remains_move(self):
@@ -174,4 +177,4 @@ class Player:
         Generates a move according to the Player's
         strategy and current state of the board.
         """
-        return self.strategy(self)
+        return None
