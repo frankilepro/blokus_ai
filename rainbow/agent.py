@@ -79,7 +79,7 @@ class Agent:
                                                           self.distr_params["num_bins"]).to(self.device)
             # self.model = torch.load(self.model_path, map_location=self.device)
             self.model = DuelingDistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params, is_noisy)\
-                         .to(self.device)
+                .to(self.device)
 
         elif self.is_distributional:
             self.distr_params = distr_params
@@ -87,7 +87,7 @@ class Agent:
                                                           self.distr_params["v_max"],
                                                           self.distr_params["num_bins"]).to(self.device)
             self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params, self.is_noisy)\
-                         .to(self.device)
+                .to(self.device)
         elif self.is_noisy and self.is_dueling:
             self.model = NoisyDuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
         elif self.is_dueling:
@@ -219,7 +219,7 @@ class Agent:
 
                 if self.is_prioritized:
                     self.prioritized_params["b"] = min(1.0, i / num_episodes) * (1 - self.prioritized_params["b"]) + \
-                                                   self.prioritized_params["b"]
+                        self.prioritized_params["b"]
                     self.memory.update_beta(self.prioritized_params["b"])
 
                 if self.nsteps is not None:
@@ -279,7 +279,7 @@ class Agent:
 
 if __name__ == "__main__":
     # env = gym.make("CartPole-v0")
-    env = gym.make("blokus:blokus-simple-v0")
+    env = gym.make("blokus_gym:blokus-simple-v0")
     memory_size = 1000
     num_episodes = 10000
 

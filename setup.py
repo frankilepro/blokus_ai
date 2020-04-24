@@ -1,31 +1,45 @@
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import build_ext
+import os
+import pkg_resources
+from setuptools import setup, Extension
+from Cython.Build import build_ext, cythonize
 
 
 ext_modules = [
-    Extension("blokus.envs.blokus_env", ["blokus/envs/blokus_env.py"]),
-    Extension("blokus.envs.blokus_simple_env", ["blokus/envs/blokus_simple_env.py"]),
-    Extension("blokus.envs.blokus_duo_env", ["blokus/envs/blokus_duo_env.py"]),
-    Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
-    Extension("blokus.envs.shapes.shape", ["blokus/envs/shapes/shape.py"]),
-    Extension("blokus.envs.players.player", ["blokus/envs/players/player.py"]),
-    Extension("blokus.envs.players.random_player", ["blokus/envs/players/random_player.py"]),
-    Extension("blokus.envs.game.blokus_game", ["blokus/envs/game/blokus_game.py"]),
-    Extension("blokus.envs.game.board", ["blokus/envs/game/board.py"]),
+    Extension("blokus_gym.envs.blokus_env", ["blokus_gym/envs/blokus_env.py"]),
+    Extension("blokus_gym.envs.blokus_envs", ["blokus_gym/envs/blokus_envs.py"]),
+    Extension("blokus_gym.envs.shapes.shape", ["blokus_gym/envs/shapes/shape.py"]),
+    Extension("blokus_gym.envs.shapes.shapes", ["blokus_gym/envs/shapes/shapes.py"]),
+    Extension("blokus_gym.envs.players.player", ["blokus_gym/envs/players/player.py"]),
+    Extension("blokus_gym.envs.players.random_player", ["blokus_gym/envs/players/random_player.py"]),
+    Extension("blokus_gym.envs.players.greedy_player", ["blokus_gym/envs/players/greedy_player.py"]),
+    Extension("blokus_gym.envs.game.blokus_game", ["blokus_gym/envs/game/blokus_game.py"]),
+    Extension("blokus_gym.envs.game.board", ["blokus_gym/envs/game/board.py"]),
 ]
 
 for e in ext_modules:
     e.cython_directives = {'language_level': "3"}
 
+if 'BLOKUS_VERSION' in os.environ:
+    version = os.environ['BLOKUS_VERSION'].split("/")[-1]  # i.e.: v0.21
+    cython_params = {}
+else:
+    try:
+        version = pkg_resources.get_distribution("blokus-gym").version
+    except Exception:
+        version = 'v1.0'
+    cython_params = {
+        'ext_modules': cythonize(ext_modules),
+        'build_ext': build_ext
+    }
+
 setup(
-    name='blokus',
-    packages=['blokus'],
-    version='0.12',
+    name='blokus-gym',
+    packages=['blokus_gym'],
+    version=version,
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
-    url='https://github.com/frankilepro/blokus-ai',
-    # download_url='https://github.com/frankilepro/blokus-ai/archive/v0.12.tar.gz',
+    url='https://github.com/frankilepro/blokus_ai',
+    download_url=f'https://github.com/frankilepro/blokus-ai/archive/{version}.tar.gz',
     keywords=['blokus', 'board game', 'block us'],
     install_requires=[
         'gym',
@@ -40,6 +54,5 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3.7',
     ],
-    cmdclass={'build_ext': build_ext},
-    ext_modules=ext_modules,
+    **cython_params
 )

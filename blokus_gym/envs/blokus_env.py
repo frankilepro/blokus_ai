@@ -8,14 +8,14 @@ import os
 import matplotlib.pyplot as plt
 import gym
 import cython
-from blokus.envs.game.blokus_game import InvalidMoveByAi
-from blokus.envs.game.blokus_game import BlokusGame
-from blokus.envs.game.board import Board
-from blokus.envs.players.ai_player import AiPlayer
-from blokus.envs.players.random_player import RandomPlayer
-from blokus.envs.players.player import Player
-from blokus.envs.shapes.shape import Shape
-from blokus.envs.shapes.shapes import get_all_shapes
+from blokus_gym.envs.game.blokus_game import InvalidMoveByAi
+from blokus_gym.envs.game.blokus_game import BlokusGame
+from blokus_gym.envs.game.board import Board
+from blokus_gym.envs.players.ai_player import AiPlayer
+from blokus_gym.envs.players.random_player import RandomPlayer
+from blokus_gym.envs.players.player import Player
+from blokus_gym.envs.shapes.shape import Shape
+from blokus_gym.envs.shapes.shapes import get_all_shapes
 
 
 def possible_moves_func(dummy, board_size, pieces):

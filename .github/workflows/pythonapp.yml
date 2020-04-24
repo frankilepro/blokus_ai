@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master ]
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   lint:
     strategy:
@@ -39,21 +43,18 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Install dependencies
-      shell: pwsh
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pylint autopep8 mypy
 
     - name: PyLint
-      shell: pwsh
       run: |
-        pylint blokus
+        pylint blokus_gym
 
     - name: AutoPep8
-      shell: pwsh
       run: |
-        $changes = autopep8 --recursive --diff --aggressive blokus
+        $changes = autopep8 --recursive --diff --aggressive blokus_gym
         if($changes -ne $null) {
           throw $changes
         }
