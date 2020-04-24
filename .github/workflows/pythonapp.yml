@@ -50,11 +50,11 @@ jobs:
 
     - name: PyLint
       run: |
-        pylint blokus
+        pylint blokus_gym
 
     - name: AutoPep8
       run: |
-        $changes = autopep8 --recursive --diff --aggressive blokus
+        $changes = autopep8 --recursive --diff --aggressive blokus_gym
         if($changes -ne $null) {
           throw $changes
         }

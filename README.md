@@ -8,12 +8,13 @@
 ### Install project locally
 
 ```bash
-pip install -e .
+pip install blokus-gym
 ```
 
 If you want to speed up the game by 2x, run this
 
 ```bash
+pip install -e .
 python setup.py build_ext --inplace
 ```
 
