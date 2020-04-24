@@ -311,16 +311,18 @@ if __name__ == "__main__":
         "is_distributional": False,
         "nsteps": None
     }
-    params = ["", "is_double", "is_dueling", "is_prioritized", "is_noisy", "is_distributional", "nsteps"]
-    names = ["Rainbow", "No Double", "No Dueling", "No PER", "No Noisy", "No Distributional", "No N-steps", "DQN"]
+    # params = ["", "is_double", "is_dueling", "is_prioritized", "is_noisy", "is_distributional", "nsteps"]
+    # names = ["Rainbow", "No Double", "No Dueling", "No PER", "No Noisy", "No Distributional", "No N-steps", "DQN"]
+    params = ["is_distributional", "nsteps"]
+    names = ["No Distributional", "No N-steps", "DQN"]
     # names = ["Rainbow", "DQN"]
     # configs = [config_rainbow, config_dqn]
 
     fig, train = plt.subplots(1, 1, constrained_layout=True, figsize=(10, 8))
 
     for idx, key in enumerate(config.keys()):
-        if params[idx] != "":
-            config[params[idx]] = False
+        # if params[idx] != "":
+        config[params[idx]] = False
     # for idx, config in enumerate(configs):
         agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename,
                       nsteps=config["nsteps"], is_double=config["is_double"], is_dueling=config["is_dueling"],
