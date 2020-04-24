@@ -1,5 +1,5 @@
-import blokus
-from blokus.envs.blokus_env import BlokusEnv
+import blokus_gym
+from blokus_gym.envs.blokus_env import BlokusEnv
 import gym
 import random
 import pkg_resources
@@ -13,10 +13,10 @@ if __name__ == "__main__":
     #     # do something about the letters in the last field of version
     #     pass
     # new_version = '.'.join(split_version)
-    new_version = float(pkg_resources.get_distribution("blokus").version) + 0.01
+    new_version = float(pkg_resources.get_distribution("blokus_gym").version) + 0.01
     print(f"{new_version:0.2f}")
     # # env = BlokusEnv()
-    # env = gym.make("blokus:blokus-hard-greedy-v0")  # Make sure to do: pip install -e blokus in root
+    # env = gym.make("blokus_gym:blokus-hard-greedy-v0")  # Make sure to do: pip install -e . in root
     # print(f"number of possible moves {env.action_space}")
     # for _ in range(100000):
     #     while True:

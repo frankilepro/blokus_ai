@@ -1,4 +1,4 @@
-from blokus.envs.shapes.shape import Shape
+from blokus_gym.envs.shapes.shape import Shape
 
 
 def get_all_shapes():

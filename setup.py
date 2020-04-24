@@ -5,15 +5,15 @@ from Cython.Build import build_ext, cythonize
 
 
 ext_modules = [
-    Extension("blokus.envs.blokus_env", ["blokus/envs/blokus_env.py"]),
-    Extension("blokus.envs.blokus_envs", ["blokus/envs/blokus_envs.py"]),
-    Extension("blokus.envs.shapes.shape", ["blokus/envs/shapes/shape.py"]),
-    Extension("blokus.envs.shapes.shapes", ["blokus/envs/shapes/shapes.py"]),
-    Extension("blokus.envs.players.player", ["blokus/envs/players/player.py"]),
-    Extension("blokus.envs.players.random_player", ["blokus/envs/players/random_player.py"]),
-    Extension("blokus.envs.players.greedy_player", ["blokus/envs/players/greedy_player.py"]),
-    Extension("blokus.envs.game.blokus_game", ["blokus/envs/game/blokus_game.py"]),
-    Extension("blokus.envs.game.board", ["blokus/envs/game/board.py"]),
+    Extension("blokus_gym.envs.blokus_env", ["blokus_gym/envs/blokus_env.py"]),
+    Extension("blokus_gym.envs.blokus_envs", ["blokus_gym/envs/blokus_envs.py"]),
+    Extension("blokus_gym.envs.shapes.shape", ["blokus_gym/envs/shapes/shape.py"]),
+    Extension("blokus_gym.envs.shapes.shapes", ["blokus_gym/envs/shapes/shapes.py"]),
+    Extension("blokus_gym.envs.players.player", ["blokus_gym/envs/players/player.py"]),
+    Extension("blokus_gym.envs.players.random_player", ["blokus_gym/envs/players/random_player.py"]),
+    Extension("blokus_gym.envs.players.greedy_player", ["blokus_gym/envs/players/greedy_player.py"]),
+    Extension("blokus_gym.envs.game.blokus_game", ["blokus_gym/envs/game/blokus_game.py"]),
+    Extension("blokus_gym.envs.game.board", ["blokus_gym/envs/game/board.py"]),
 ]
 
 for e in ext_modules:
@@ -23,15 +23,18 @@ if 'BLOKUS_VERSION' in os.environ:
     version = os.environ['BLOKUS_VERSION'].split("/")[-1]  # i.e.: v0.21
     cython_params = {}
 else:
-    version = pkg_resources.get_distribution("blokus").version
+    try:
+        version = pkg_resources.get_distribution("blokus-gym").version
+    except Exception:
+        version = 'v1.0'
     cython_params = {
         'ext_modules': cythonize(ext_modules),
         'build_ext': build_ext
     }
 
 setup(
-    name='blokus',
-    packages=['blokus'],
+    name='blokus-gym',
+    packages=['blokus_gym'],
     version=version,
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',

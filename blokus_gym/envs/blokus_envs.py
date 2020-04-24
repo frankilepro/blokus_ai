@@ -1,6 +1,6 @@
-from blokus.envs.blokus_env import BlokusEnv
-from blokus.envs.shapes.shapes import get_all_shapes
-from blokus.envs.players.greedy_player import GreedyPlayer
+from blokus_gym.envs.blokus_env import BlokusEnv
+from blokus_gym.envs.shapes.shapes import get_all_shapes
+from blokus_gym.envs.players.greedy_player import GreedyPlayer
 
 
 class BlokusGreedyEnv(BlokusEnv):

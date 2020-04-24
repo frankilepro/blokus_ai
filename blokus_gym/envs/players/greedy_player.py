@@ -1,5 +1,5 @@
 import numpy as np
-from blokus.envs.players.player import Player
+from blokus_gym.envs.players.player import Player
 
 
 class GreedyPlayer(Player):

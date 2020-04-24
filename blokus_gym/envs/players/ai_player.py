@@ -1,4 +1,4 @@
-from blokus.envs.players.player import Player
+from blokus_gym.envs.players.player import Player
 
 
 class AiPlayer(Player):
