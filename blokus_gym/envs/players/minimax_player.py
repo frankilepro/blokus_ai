@@ -90,7 +90,7 @@ def Minimax_Player(player, game, weights):
             # create a copy of the pieces that the current player has
             piece_copies = copy.deepcopy(shape_options)
             # remove the Piece that was just placed on the board
-            piece_copies = [p for p in piece_copies if p.id != piece.id]
+            piece_copies = [p for p in piece_copies if p.label != piece.label]
             # OPPONENTS' TURN TO PLACE PIECE
             # for each opponent:
             for opponent in opponents:

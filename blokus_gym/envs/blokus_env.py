@@ -141,8 +141,8 @@ class BlokusEnv(gym.Env):
         return mask
 
     def __set_all_possible_moves(self):
-        if self.all_possible_indexes_to_moves is not None:
-            return
+        # if self.all_possible_indexes_to_moves is not None:
+        #     return
 
         state_file = os.path.join(self.STATES_FOLDER, self.STATES_FILE)
         if os.path.exists(state_file):

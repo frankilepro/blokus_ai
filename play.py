@@ -22,6 +22,7 @@ if __name__ == "__main__":
                 # print(env.ai.all_ids_to_move.keys())
                 # input()
                 print(f"{'won' if reward == 2 else ('tie-won' if reward == 0 else 'lost')}")
+                input()
                 # print(env.ai.all_ids_to_move.keys())
                 observation = env.reset()
                 # input()
