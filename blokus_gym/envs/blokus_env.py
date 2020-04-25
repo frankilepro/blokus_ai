@@ -93,7 +93,7 @@ class BlokusEnv(gym.Env):
             self.blokus_game.play()
             return self.__get_done_reward()
         except InvalidMoveByAi:
-            self.ai.next_move = self.ai_sample_possible_index()
+            self.ai.next_move = self.all_possible_indexes_to_moves[self.ai_sample_possible_index()]
             self.blokus_game.play()
             done, reward = self.__get_done_reward()
             return done, min(self.rewards['invalid'], reward)
