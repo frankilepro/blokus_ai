@@ -32,14 +32,15 @@ class LegalSoftmax(nn.Module):
         super(LegalSoftmax, self).__init__()
 
     def forward(self, x, possible_moves):
-        legal_moves = possible_moves
-        actions_tensor = torch.zeros(x.shape).to(x.device)
-        batch_size = x.shape[0]
-        for i in range(batch_size):
-            actions_tensor[i, legal_moves[i]] = 1.0
-        filtered_actions = x * actions_tensor
-        filtered_actions[filtered_actions == 0] = -1000
-        return F.softmax(filtered_actions, dim=1)
+        return x
+        # legal_moves = possible_moves
+        # actions_tensor = torch.zeros(x.shape).to(x.device)
+        # batch_size = x.shape[0]
+        # for i in range(batch_size):
+        #     actions_tensor[i, legal_moves[i]] = 1.0
+        # filtered_actions = x * actions_tensor
+        # filtered_actions[filtered_actions == 0] = -1000
+        # return F.softmax(filtered_actions, dim=1)
 
 
 class DuelingNetwork(nn.Module):

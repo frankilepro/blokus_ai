@@ -72,8 +72,8 @@ class Agent:
         self.is_noisy = is_noisy
         self.is_distributional = is_distributional
         self.is_prioritized = is_prioritized
+        self.distr_params = distr_params
         if self.is_distributional and self.is_dueling:
-            self.distr_params = distr_params
             self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
                                                           self.distr_params["v_max"],
                                                           self.distr_params["num_bins"]).to(self.device)
@@ -82,7 +82,6 @@ class Agent:
                 .to(self.device)
 
         elif self.is_distributional:
-            self.distr_params = distr_params
             self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
                                                           self.distr_params["v_max"],
                                                           self.distr_params["num_bins"]).to(self.device)
@@ -150,7 +149,7 @@ class Agent:
 
         with torch.no_grad():
             d_target = ((1 - done.float()) * self.gamma * self.distr_params["v_range"]
-                        + reward).clamp(self.distr_params["v_min"], self.distr_params["v_max"])
+                        + reward.float()).clamp(self.distr_params["v_min"], self.distr_params["v_max"])
             v_step = (self.distr_params["v_max"] - self.distr_params["v_min"]) / (self.distr_params["num_bins"] - 1)
             delta = (d_target - self.distr_params["v_min"]) / v_step
 
@@ -313,43 +312,43 @@ if __name__ == "__main__":
     }
     # params = ["", "is_double", "is_dueling", "is_prioritized", "is_noisy", "is_distributional", "nsteps"]
     # names = ["Rainbow", "No Double", "No Dueling", "No PER", "No Noisy", "No Distributional", "No N-steps", "DQN"]
-    params = ["is_distributional", "nsteps"]
-    names = ["No Distributional", "No N-steps", "DQN"]
+    params = ["nsteps"]
+    names = ["No N-steps", "DQN"]
     # names = ["Rainbow", "DQN"]
     # configs = [config_rainbow, config_dqn]
 
-    fig, train = plt.subplots(1, 1, constrained_layout=True, figsize=(10, 8))
+    # fig, train = plt.subplots(1, 1, constrained_layout=True, figsize=(10, 8))
 
-    for idx, key in enumerate(config.keys()):
+    # for idx, key in enumerate(config.keys()):
         # if params[idx] != "":
-        config[params[idx]] = False
-    # for idx, config in enumerate(configs):
-        agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename,
-                      nsteps=config["nsteps"], is_double=config["is_double"], is_dueling=config["is_dueling"],
-                      is_noisy=config["is_noisy"], is_distributional=config["is_distributional"],
-                      distr_params=dist_params, is_prioritized=config["is_prioritized"],
-                      prioritized_params=prioritized_params)
+    config[params[0]] = None
+# # for idx, config in enumerate(configs):
+#     agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename,
+#                   nsteps=config["nsteps"], is_double=config["is_double"], is_dueling=config["is_dueling"],
+#                   is_noisy=config["is_noisy"], is_distributional=config["is_distributional"],
+#                   distr_params=dist_params, is_prioritized=config["is_prioritized"],
+#                   prioritized_params=prioritized_params)
+#
+#     scores = agent.train()
+#     train.plot(np.linspace(0, num_episodes, len(scores)), scores, label=names[0])
+#     print(names[0])
 
-        scores = agent.train()
-        train.plot(np.linspace(0, num_episodes, len(scores)), scores, label=names[idx])
-        print(names[idx])
-
-    config = config_dqn
+    # config = config_dqn
     agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename,
-                  nsteps=config["nsteps"], is_double=config["is_double"], is_dueling=config["is_dueling"],
-                  is_noisy=config["is_noisy"], is_distributional=config["is_distributional"],
-                  distr_params=dist_params, is_prioritized=config["is_prioritized"],
+                  nsteps=None, is_double=True, is_dueling=True,
+                  is_noisy=True, is_distributional=True,
+                  distr_params=dist_params, is_prioritized=True,
                   prioritized_params=prioritized_params)
 
     scores = agent.train()
-    train.plot(np.linspace(0, num_episodes, len(scores)), scores, label=names[-1])
-    print(names[-1])
-
-    train.set_xlabel("Episodes")
-    train.set_ylabel("Average win")
-    train.set_title("Score during blokus training")
-    train.legend(loc="best")
-    fig.savefig("results.png")
+    # train.plot(np.linspace(0, num_episodes, len(scores)), scores, label=names[-1])
+    # print(names[-1])
+    #
+    # train.set_xlabel("Episodes")
+    # train.set_ylabel("Average win")
+    # train.set_title("Score during blokus training")
+    # train.legend(loc="best")
+    # fig.savefig("results.png")
 
     # agent.train()
     # total = 0
