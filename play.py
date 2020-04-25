@@ -11,6 +11,7 @@ if __name__ == "__main__":
         while True:
             # input()
             action = env.action_space.sample()
+            action = 10
             # action = random.randint(0, 918)
             observation, reward, done, info = env.step(action)
             env.render("human")
