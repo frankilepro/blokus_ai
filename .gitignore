@@ -201,5 +201,5 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 .vscode/
-blokus/**/*.c
+blokus_gym/**/*.c
 time*.txt
