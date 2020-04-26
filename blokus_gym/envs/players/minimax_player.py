@@ -71,4 +71,5 @@ class MinimaxPlayer(Player):
         return iterate_over_moves(player, depth, possible_moves, prev_moves)
 
     def do_move(self):
-        return MinimaxPlayer.minimax(copy.deepcopy(self.game), 1, 1, [])[0][0]
+        moves = MinimaxPlayer.minimax(copy.deepcopy(self.game), 1, 1, [])[0]
+        return moves[0] if moves else None
