@@ -5,7 +5,7 @@ import random
 
 if __name__ == "__main__":
     # env = BlokusEnv()
-    env = gym.make("blokus_gym:blokus-simple-v0")  # Make sure to do: pip install -e . in root
+    env = gym.make("blokus_gym:blokus-simple-minimax-v0")  # Make sure to do: pip install -e . in root
     print(f"number of possible moves {env.action_space}")
     for _ in range(100000):
         while True:

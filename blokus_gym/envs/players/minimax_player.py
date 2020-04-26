@@ -8,7 +8,7 @@ class MinimaxPlayer(Player):
     @staticmethod
     def possible_moves_of_size(player, size):
         placements = []
-        for moves in player.all_ids_to_move.values():
+        for moves in player.all_labels_to_move.values():
             placements.extend(move for move in moves if move.size == size and player.game.valid_move(player, move))
         return placements
 
@@ -16,7 +16,7 @@ class MinimaxPlayer(Player):
     def possible_moves_bellow_size(player, size):
         possible_moves = []
         while len(possible_moves) == 0:
-            possible_moves = player.possible_moves_of_size(size)
+            possible_moves = MinimaxPlayer.possible_moves_of_size(player, size)
             size -= 1
             if size == 0 and len(possible_moves) == 0:
                 return None
@@ -67,15 +67,15 @@ class MinimaxPlayer(Player):
             for move in possible_moves:
                 node = copy.deepcopy(self.game)
                 MinimaxPlayer.play_without_do_move(node, move)
-                move_score = max(move_score, self.minimax(node, depth - 1), lambda x: x[1])
+                move_score = max(move_score, self.minimax(node, depth - 1), key=lambda x: x[1])
             return move_score
         else:
             move_score = (None, maxsize)
             for move in possible_moves:
                 node = copy.deepcopy(self.game)
                 MinimaxPlayer.play_without_do_move(node, move)
-                move_score = min(move_score, self.minimax(node, depth - 1), lambda x: x[1])
+                move_score = min(move_score, self.minimax(node, depth - 1), key=lambda x: x[1])
             return move_score
 
     def do_move(self):
-        return self.minimax(copy.deepcopy(self.game), 5)[0]
+        return self.minimax(copy.deepcopy(self.game), 1)[0]
