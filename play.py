@@ -17,7 +17,7 @@ if __name__ == "__main__":
             nb_rounds += 1
             # action = random.randint(0, 918)
             observation, reward, done, info = env.step(action)
-            # env.render("human")
+            env.render("human")
             # print(env.ai.all_ids_to_move.keys())
             # print(reward)
 
