@@ -29,5 +29,5 @@ class BlokusSimpleGreedyEnv(BlokusSimpleEnv):
     bot_type = GreedyPlayer
 
 
-class BlokusSimpleGreedyEnv(BlokusSimpleEnv):
+class BlokusSimpleMinimaxEnv(BlokusSimpleEnv):
     bot_type = MinimaxPlayer
