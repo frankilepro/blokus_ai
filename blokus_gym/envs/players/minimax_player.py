@@ -60,22 +60,22 @@ class MinimaxPlayer(Player):
         player = game.next_player()
         possible_moves = MinimaxPlayer.possible_moves_bellow_size(player, size)
         if depth == 0 or possible_moves is None:
-            return (None, self.score_player(player))
+            return (self.score_player(player), None)
 
         if player is self:
-            move_score = (None, - maxsize - 1)
+            move_score = (- maxsize - 1, None)
             for move in possible_moves:
                 node = copy.deepcopy(self.game)
                 MinimaxPlayer.play_without_do_move(node, move)
-                move_score = max(move_score, self.minimax(node, depth - 1), key=lambda x: x[1])
+                move_score = max(move_score, self.minimax(node, depth - 1))
             return move_score
         else:
-            move_score = (None, maxsize)
+            move_score = (maxsize, None)
             for move in possible_moves:
                 node = copy.deepcopy(self.game)
                 MinimaxPlayer.play_without_do_move(node, move)
-                move_score = min(move_score, self.minimax(node, depth - 1), key=lambda x: x[1])
+                move_score = min(move_score, self.minimax(node, depth - 1))
             return move_score
 
     def do_move(self):
-        return self.minimax(copy.deepcopy(self.game), 1)[0]
+        return self.minimax(copy.deepcopy(self.game), 1)[1]
