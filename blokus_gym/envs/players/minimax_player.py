@@ -59,7 +59,7 @@ class MinimaxPlayer(Player):
         size = 5
         player = game.next_player()
         possible_moves = MinimaxPlayer.possible_moves_bellow_size(player, size)
-        if depth == 0 or len(possible_moves) == 0:
+        if depth == 0 or possible_moves is None:
             return (None, self.score_player(player))
 
         if player is self:
