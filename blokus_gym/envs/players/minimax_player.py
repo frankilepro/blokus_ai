@@ -1,5 +1,5 @@
 import numpy as np
-from sys import maxint
+from sys import maxsize
 from blokus_gym.envs.players.player import Player
 import copy
 
@@ -63,14 +63,14 @@ class MinimaxPlayer(Player):
             return (None, self.score_player(player))
 
         if player is self:
-            move_score = (None, - maxint - 1)
+            move_score = (None, - maxsize - 1)
             for move in possible_moves:
                 node = copy.deepcopy(self.game)
                 MinimaxPlayer.play_without_do_move(node, move)
                 move_score = max(move_score, self.minimax(node, depth - 1), lambda x: x[1])
             return move_score
         else:
-            move_score = (None, maxint)
+            move_score = (None, maxsize)
             for move in possible_moves:
                 node = copy.deepcopy(self.game)
                 MinimaxPlayer.play_without_do_move(node, move)
