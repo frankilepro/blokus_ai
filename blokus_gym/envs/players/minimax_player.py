@@ -43,7 +43,7 @@ class MinimaxPlayer(Player):
 
     def minimax(self, game, depth, prev_move):
         player = game.next_player()
-        possible_moves = player.possible_moves_opt()
+        possible_moves = [move for move in player.possible_moves_opt() if self.game.valid_move(self, move)]
         if depth < 0 or len(possible_moves) == 0:
             return (self.score_player(player), prev_move)
 
@@ -63,6 +63,4 @@ class MinimaxPlayer(Player):
             return score_move
 
     def do_move(self):
-        score_move = self.minimax(copy.deepcopy(self.game), 2, None)
-
-        return score_move[1]
+        return self.minimax(copy.deepcopy(self.game), 2, None)[1]
