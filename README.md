@@ -21,5 +21,5 @@ python setup.py build_ext --inplace
 To undo this TODO find a better way
 
 ```bash
-cd blokus && git clean -fdx && cd ..
+cd blokus_gym && git clean -fdx && cd ..
 ```
