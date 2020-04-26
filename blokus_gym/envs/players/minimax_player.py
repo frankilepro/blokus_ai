@@ -5,16 +5,13 @@ import copy
 
 
 class MinimaxPlayer(Player):
-    @staticmethod
-    def score_player(player):
-        self_corners_len = len(player.corners)
-        # TODO opt set
-        len_differentials = [self_corners_len - (len(game_player.corners) - len(game_player.corners))
-                             for game_player in player.game.players if game_player != player]
 
-        score_differentials = [player.score - (game_player.score - game_player.score)
-                               for game_player in player.game.players if game_player != player]
-        return np.mean(len_differentials) + 5 * np.mean(score_differentials)
+    def score_player(self, game):
+        score = 0
+        for player in game.players:
+            score_player = len(player.corners) + 5 * player.score
+            score = score + score_player if player.index == self.index else score - score_player
+        return score
 
     @staticmethod
     def play_without_do_move(game, move):
@@ -45,7 +42,7 @@ class MinimaxPlayer(Player):
         player = game.next_player()
         possible_moves = [move for move in player.possible_moves_opt() if self.game.valid_move(self, move)]
         if depth < 0 or len(possible_moves) == 0:
-            return (self.score_player(player), prev_move)
+            return (self.score_player(game), prev_move)
 
         if player.index == self.index:
             score_move = (- maxsize - 1, None)
@@ -63,4 +60,4 @@ class MinimaxPlayer(Player):
             return score_move
 
     def do_move(self):
-        return self.minimax(copy.deepcopy(self.game), 2, None)[1]
+        return self.minimax(copy.deepcopy(self.game), 1, None)[1]
