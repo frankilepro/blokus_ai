@@ -2,6 +2,9 @@ import numpy as np
 from sys import maxsize
 from blokus_gym.envs.players.player import Player
 import copy
+# from multiprocessing import Process, Lock, shared_memory
+from multiprocessing import Pool
+import os
 
 
 class MinimaxPlayer(Player):
@@ -38,18 +41,34 @@ class MinimaxPlayer(Player):
                 # increment the number of rounds just played
                 game.rounds += 1
 
-    def minimax(self, game, depth, prev_move):
-        player = game.next_player()
-        possible_moves = [move for move in player.possible_moves_opt() if self.game.valid_move(self, move)]
-        if depth < 0 or len(possible_moves) == 0:
-            return (prev_move, MinimaxPlayer.score_players(game))
-
-        score_move = (None, [- maxsize - 1] * len(game.players))
+    @staticmethod
+    def iterate_over_moves(player, depth, possible_moves, prev_moves):
+        score_move = [None, [- maxsize - 1] * len(player.game.players)]
         for move in possible_moves:
             node = copy.deepcopy(player.game)
             MinimaxPlayer.play_without_do_move(node, move)
-            score_move = max(score_move, self.minimax(node, depth - 1, move), key=lambda x: x[1][player.index - 1])
+            current_score = MinimaxPlayer.minimax(node, depth - 1, depth, prev_moves + [move])
+            score_move = max(score_move, current_score, key=lambda x: x[1][player.index - 1])
         return score_move
 
+    @staticmethod
+    def minimax(game, depth, start_depth, prev_moves):
+        player = game.next_player()
+        possible_moves = [move for move in player.possible_moves_opt() if game.valid_move(player, move)]
+        nb_possible_moves = len(possible_moves)
+        if depth < 0 or nb_possible_moves == 0:
+            return [prev_moves, MinimaxPlayer.score_players(game)]
+
+        if depth == start_depth and nb_possible_moves >= os.cpu_count() :
+            process_split_factor = nb_possible_moves // os.cpu_count()
+            split_possible_moves = np.split(possible_moves, list(range(0, nb_possible_moves, process_split_factor)))[1:]
+            args = [(player, depth, moves, prev_moves) for moves in split_possible_moves]
+            with Pool(os.cpu_count()) as pool:
+                scores = (pool.starmap(MinimaxPlayer.iterate_over_moves, args))
+                max_score = max(scores, key=lambda x: x[1][player.index - 1])
+                return max_score
+
+        return MinimaxPlayer.iterate_over_moves(player, depth, possible_moves, prev_moves)
+
     def do_move(self):
-        return self.minimax(copy.deepcopy(self.game), 1, None)[0]
+        return MinimaxPlayer.minimax(copy.deepcopy(self.game), 1, 1, [])[0][0]
