@@ -29,3 +29,8 @@ register(
     id='blokus-duo-greedy-v0',
     entry_point='blokus_gym.envs:BlokusDuoGreedyEnv',
 )
+
+register(
+    id='blokus-simple-minimax-v0',
+    entry_point='blokus_gym.envs:BlokusSimpleMinimaxEnv',
+)
