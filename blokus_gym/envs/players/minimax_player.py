@@ -6,12 +6,12 @@ import copy
 
 class MinimaxPlayer(Player):
 
-    def score_player(self, game):
-        score = 0
+    @staticmethod
+    def score_players(game):
+        scores = np.zeros(len(game.players))
         for player in game.players:
-            score_player = len(player.corners) + 5 * player.score
-            score = score + score_player if player.index == self.index else score - score_player
-        return score
+            scores[player.index - 1] = len(player.corners) + 5 * player.score
+        return 2 * scores - np.sum(scores)
 
     @staticmethod
     def play_without_do_move(game, move):
@@ -42,22 +42,14 @@ class MinimaxPlayer(Player):
         player = game.next_player()
         possible_moves = [move for move in player.possible_moves_opt() if self.game.valid_move(self, move)]
         if depth < 0 or len(possible_moves) == 0:
-            return (self.score_player(game), prev_move)
+            return (prev_move, MinimaxPlayer.score_players(game))
 
-        if player.index == self.index:
-            score_move = (- maxsize - 1, None)
-            for move in possible_moves:
-                node = copy.deepcopy(player.game)
-                MinimaxPlayer.play_without_do_move(node, move)
-                score_move = max(score_move, self.minimax(node, depth - 1, move))
-            return score_move
-        else:
-            score_move = (maxsize, None)
-            for move in possible_moves:
-                node = copy.deepcopy(player.game)
-                MinimaxPlayer.play_without_do_move(node, move)
-                score_move = min(score_move, self.minimax(node, depth - 1, move))
-            return score_move
+        score_move = (None, [- maxsize - 1] * len(game.players))
+        for move in possible_moves:
+            node = copy.deepcopy(player.game)
+            MinimaxPlayer.play_without_do_move(node, move)
+            score_move = max(score_move, self.minimax(node, depth - 1, move), key=lambda x: x[1][player.index - 1])
+        return score_move
 
     def do_move(self):
-        return self.minimax(copy.deepcopy(self.game), 1, None)[1]
+        return self.minimax(copy.deepcopy(self.game), 1, None)[0]
