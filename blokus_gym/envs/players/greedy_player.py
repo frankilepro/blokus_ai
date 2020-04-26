@@ -5,7 +5,7 @@ from blokus_gym.envs.players.player import Player
 class GreedyPlayer(Player):
     def possible_moves_of_size(self, size):
         placements = []
-        for moves in self.all_ids_to_move.values():
+        for moves in self.all_labels_to_move.values():
             placements.extend(move for move in moves if move.size == size and self.game.valid_move(self, move))
         return placements
 
