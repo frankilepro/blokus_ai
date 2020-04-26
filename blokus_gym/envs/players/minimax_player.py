@@ -13,7 +13,7 @@ class MinimaxPlayer(Player):
                              for game_player in player.game.players if game_player != player]
 
         score_differentials = [player.score - (game_player.score - game_player.score)
-                             for game_player in player.game.players if game_player != player]
+                               for game_player in player.game.players if game_player != player]
         return np.mean(len_differentials) + 5 * np.mean(score_differentials)
 
     @staticmethod
@@ -44,25 +44,25 @@ class MinimaxPlayer(Player):
     def minimax(self, game, depth, prev_move):
         player = game.next_player()
         possible_moves = player.possible_moves_opt()
-        if depth == 0 or len(possible_moves) == 0:
+        if depth < 0 or len(possible_moves) == 0:
             return (self.score_player(player), prev_move)
 
-        if player.index == self.index :
+        if player.index == self.index:
             score_move = (- maxsize - 1, None)
             for move in possible_moves:
-                node = copy.deepcopy(self.game)
+                node = copy.deepcopy(player.game)
                 MinimaxPlayer.play_without_do_move(node, move)
                 score_move = max(score_move, self.minimax(node, depth - 1, move))
             return score_move
         else:
             score_move = (maxsize, None)
             for move in possible_moves:
-                node = copy.deepcopy(self.game)
+                node = copy.deepcopy(player.game)
                 MinimaxPlayer.play_without_do_move(node, move)
                 score_move = min(score_move, self.minimax(node, depth - 1, move))
             return score_move
 
     def do_move(self):
-        score_move = self.minimax(copy.deepcopy(self.game), 1, None)
+        score_move = self.minimax(copy.deepcopy(self.game), 2, None)
 
         return score_move[1]
