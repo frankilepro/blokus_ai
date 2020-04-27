@@ -5,10 +5,19 @@
 
 ## Install project locally
 
-This will compile the project using Cython, you need to run this every time you make changes to the code
+### From PyPi
 
 ```bash
 pip install blokus-gym
+```
+
+### From source with Cython
+
+This will compile the project using Cython, you need to run this every time you make changes to the code
+
+```bash
+git clone https://github.com/frankilepro/blokus_ai.git
+pip install -e blokus_ai
 ```
 
 If you wish to debug or simply not to re-compile at every operation, you can do this:
