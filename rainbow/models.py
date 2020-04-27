@@ -32,14 +32,14 @@ class LegalSoftmax(nn.Module):
         super(LegalSoftmax, self).__init__()
 
     def forward(self, x, possible_moves):
-        return x
-        # legal_moves = possible_moves
-        # actions_tensor = torch.zeros(x.shape).to(x.device)
-        # batch_size = x.shape[0]
-        # for i in range(batch_size):
-        #     actions_tensor[i, legal_moves[i]] = 1.0
-        # filtered_actions = x * actions_tensor
-        # filtered_actions[filtered_actions == 0] = -1000
+        legal_moves = possible_moves
+        actions_tensor = torch.zeros(x.shape).to(x.device)
+        batch_size = x.shape[0]
+        for i in range(batch_size):
+            actions_tensor[i, legal_moves[i]] = 1.0
+        filtered_actions = x * actions_tensor
+        filtered_actions[filtered_actions == 0] = -np.inf
+        return filtered_actions
         # return F.softmax(filtered_actions, dim=1)
 
 
@@ -59,9 +59,9 @@ class DuelingNetwork(nn.Module):
     def forward(self, x, possible_moves):
         x = self.input_layer(x)
         advantage = self.advantage_layer(x)
-        advantage = self.custom_softmax(advantage, possible_moves)
+        advantage = advantage
         value = self.value_layer(x)
-        return advantage + value - advantage.mean()
+        return self.custom_softmax(advantage + value - advantage.mean(), possible_moves)
 
 
 class NoisyNetwork(nn.Module):
@@ -246,13 +246,6 @@ class DuelingDistributionalNetwork(nn.Module):
 
         q = value + advantage - advantage.mean(dim=1, keepdim=True)
         return self.softmax(q).clamp(1e-5)
-
-    def update_noise(self):
-        self.advantage_layer_hidden.update_noise()
-        self.advantage_layer_out.update_noise()
-
-        self.value_layer_hidden.update_noise()
-        self.value_layer_out.update_noise()
 
     def forward(self, x, possible_moves):
         x = torch.sum(self.action_distr(x) * self.v_range, dim=2)

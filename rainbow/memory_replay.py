@@ -6,7 +6,7 @@ from rainbow.segment_tree import MinSegmentTree, SumSegmentTree
 
 
 class ReplayMemory:
-    def __init__(self, max_size, batch_size, gamma=0.9, nsteps=None):
+    def __init__(self, max_size, batch_size, gamma=0.99, nsteps=None):
         self.max_size = max_size
         self.batch_size = batch_size
         self.memory = deque([], maxlen=max_size)
@@ -56,10 +56,8 @@ class ReplayMemory:
             dones.append(done)
             possible_moves.append(move)
         states = torch.cat(states).reshape(self.batch_size, -1)
-        # states = torch.cat(states).reshape(self.batch_size, state.shape[0], state.shape[1])
         actions = torch.tensor(actions).unsqueeze(1).to(states.device)
         next_states = torch.cat(next_states).reshape(self.batch_size, -1)
-        # next_states = torch.cat(next_states).reshape(self.batch_size, state.shape[0], state.shape[1])
         rewards = torch.tensor(rewards).unsqueeze(1).to(states.device)
         dones = torch.tensor(dones).unsqueeze(1).to(states.device)
         return states, actions, next_states, rewards, dones, possible_moves
