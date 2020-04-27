@@ -197,7 +197,7 @@ class Agent:
             state, action, next_state, reward, done, possible_move = self.memory.get_random_batch()
         self.update(reward, done, next_state, state, action, possible_move, idx, weight)
 
-    def ohe(self, state):
+    def process_state(self, state):
         return state.view(-1).type(torch.float32).to(self.device)
 
     def train(self):
@@ -209,7 +209,7 @@ class Agent:
         for i in range(1, self.num_episodes):
             rewards = 0
             done = False
-            state = self.ohe(self.env.reset())
+            state = self.process_state(self.env.reset())
             while not done:
                 action = self.eps_greedy_action(state)
                 possible_move = self.env.ai_possible_indexes()
@@ -217,7 +217,7 @@ class Agent:
 
                 # env.render("human")
                 rewards += reward
-                next_state = self.ohe(next_state)
+                next_state = self.process_state(next_state)
 
                 if self.is_prioritized:
                     self.prioritized_params["b"] = min(1.0, i / self.num_episodes) * \
@@ -259,7 +259,7 @@ class Agent:
 
     def test(self):
         self.model = torch.load(self.model_path, map_location=self.device)
-        state = self.ohe(self.env.reset())
+        state = self.process_state(self.env.reset())
         self.eps = 0.0
         num_win = 0
         num_ties = 0
@@ -270,9 +270,9 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, _ = self.env.step(action)
-                # self.env.render("human")
+                self.env.render("human")
                 rewards += reward
-                state = self.ohe(next_state)
+                state = self.process_state(next_state)
             if rewards == 1:
                 num_win += 1
             elif rewards == 0:
