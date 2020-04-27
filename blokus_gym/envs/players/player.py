@@ -13,6 +13,8 @@ class Player:
         if not deterministic:
             self.rng.seed()
         self.__set_all_labels_to_move(all_moves)
+        self.removed_labels_to_move = []
+        self.corners_history = []
 
     def __set_all_labels_to_move(self, all_moves):
         self.all_labels_to_move = {}
@@ -40,12 +42,18 @@ class Player:
         """
         self.corners = set([p])
 
+    def undo_remove_piece(self):
+        label, moves = self.removed_labels_to_move.pop()
+        self.all_labels_to_move[label] = moves
+
     def remove_piece(self, piece):
         """
         Removes a given piece (Shape object) from
         the list of pieces a player has.
         """
+        pieces_move = self.all_labels_to_move[piece.label]
         del self.all_labels_to_move[piece.label]
+        self.removed_labels_to_move.append((piece.label, pieces_move))
 
     def update_player(self, placement, board):
         """
@@ -53,10 +61,16 @@ class Player:
         of, e.g. their score and their available corners.
         Placement should be in the form of a Shape object.
         """
+        self.corners_history.append(self.corners)
+        self.corners = set(self.corners)
         self.score = self.score + placement.size
         for c in placement.corners:
             if board.in_bounds(c) and not board.overlap([c]):
                 self.corners.add(c)
+
+    def undo_update_player(self, placement):
+        self.score = self.score - placement.size
+        self.corners = self.corners_history.pop()
 
     def sample_move(self):
         keys = list(self.all_labels_to_move.keys())

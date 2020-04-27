@@ -24,6 +24,10 @@ class Board:
         for x, y in move.points:
             self.tensor[y][x] = player.index
 
+    def undo_update(self, player, move):
+        for x, y in move.points:
+            self.tensor[y][x] = 0
+
     def in_bounds(self, point):
         """
         Takes in a tuple and checks if it is in the bounds of
