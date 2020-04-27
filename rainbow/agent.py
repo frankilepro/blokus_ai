@@ -65,7 +65,9 @@ class Agent:
         self.min_eps = min_eps
         self.eps_decay = eps_decay
         self.device = torch.device("cuda:" + str(0) if torch.cuda.is_available() else "cpu")
-        self.model_path = os.path.join(os.getcwd(), "models", model_filename + ".pt")
+        model_dir = os.path.join(os.getcwd(), 'models')
+        os.makedirs(model_dir, exist_ok=True)
+        self.model_path = os.path.join(model_dir, model_filename + ".pt")
         self.obs_size = env.observation_space.shape[0] * env.observation_space.shape[1]
 
         self.is_dueling = is_dueling
