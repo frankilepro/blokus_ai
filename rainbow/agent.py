@@ -204,7 +204,6 @@ class Agent:
         rewards_lst = []
         best_rate = 0
         ten_eps_rew = []
-        score = []
         rew = []
         for i in range(1, self.num_episodes):
             rewards = 0
@@ -244,14 +243,13 @@ class Agent:
                 ten_eps_rew.append(0)
 
             if not i % 10 and i != 1:
-                score.append(sum(ten_eps_rew) / 10)
                 rew.append(sum(rewards_lst) / i)
-                ten_eps_rew = []
-                if (sum(rewards_lst) / i) > best_rate:
+                if rew[-1] > best_rate:
                     best_rate = (sum(rewards_lst) / i)
                     torch.save(self.model, self.model_path)
 
-                print('Episode {} Win prop: {} Reward Rate {}'.format(i, score[-1], str(sum(rewards_lst) / (i + 1))))
+                print('Episode {} Win prop: {} Reward Rate {}'.format(i, sum(ten_eps_rew) / 10, rew[-1]))
+                ten_eps_rew = []
 
         torch.save(self.model, self.model_path)
         self.env.close()
