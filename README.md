@@ -24,7 +24,7 @@ If you wish to debug or simply not to re-compile at every operation, you can do 
 
 ```bash
 git add . && git commit -m "commit what is not the .c files"
-cd blokus && git clean -fdx && cd ..
+cd blokus_gym && git clean -fdx && cd ..
 ```
 
 ## Add a new environment
