@@ -56,10 +56,10 @@ class ReplayMemory:
             dones.append(done)
             possible_moves.append(move)
         states = torch.cat(states).reshape(self.batch_size, -1)
-        actions = torch.tensor(actions).unsqueeze(1).to(states.device)
+        actions = torch.tensor(actions).unsqueeze(1).to(states.device)  # pylint: disable=not-callable
         next_states = torch.cat(next_states).reshape(self.batch_size, -1)
-        rewards = torch.tensor(rewards).unsqueeze(1).to(states.device)
-        dones = torch.tensor(dones).unsqueeze(1).to(states.device)
+        rewards = torch.tensor(rewards).unsqueeze(1).to(states.device)  # pylint: disable=not-callable
+        dones = torch.tensor(dones).unsqueeze(1).to(states.device)  # pylint: disable=not-callable
         return states, actions, next_states, rewards, dones, possible_moves
 
 
@@ -117,4 +117,5 @@ class PrioritizedExperienceReplay(ReplayMemory):
             weights.append((p * len(self)) ** (-self.b) / max_weight)
             batch.append(self.memory[i])
         states, actions, next_states, rewards, dones, possible_moves = self.create_batch(batch)
-        return states, actions, next_states, rewards, dones, possible_moves, indices, torch.tensor(weights)
+        return states, actions, next_states, rewards, dones, \
+            possible_moves, indices, torch.tensor(weights)  # pylint: disable=not-callable
