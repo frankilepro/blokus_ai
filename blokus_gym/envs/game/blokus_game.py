@@ -35,8 +35,8 @@ class BlokusGame:
         Uses functions from the board to see whether
         a player's proposed move is valid.
         """
-        # if move.id not in player.all_ids_to_move:
-        #     return False
+        if move.label not in player.all_labels_to_move:
+            return False
 
         if any(not self.board.in_bounds(pt) for pt in move.points):
             return False
@@ -63,7 +63,7 @@ class BlokusGame:
         max_x = self.board.size - 1
         max_y = self.board.size - 1
         starts = [(0, 0), (max_y, max_x), (0, max_x), (max_y, 0)]
-        player.add_pieces(self.all_pieces)
+        player.set_pieces(self.all_pieces)
         player.start_corner(starts[len(self.players)])
         self.players.append(player)
         self.number_of_players = max(self.number_of_players, len(self.players))

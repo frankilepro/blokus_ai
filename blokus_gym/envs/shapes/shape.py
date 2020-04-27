@@ -6,7 +6,7 @@ class Shape:
     A class that defines the functions associated
     with a shape.
     """
-    id = ""
+    label = ""
     points = []  # TODO optimize, but not this important since max 5 points
     corners = []  # TODO optimize, same
     idx = -1
@@ -57,7 +57,7 @@ class Shape:
     @staticmethod
     def from_json(obj):
         shape = Shape()
-        shape.id = obj["id"]
+        shape.label = obj["label"]
         shape.points = list(map(tuple, obj["points"]))  # TODO optimize
         shape.corners = list(map(tuple, obj["corners"]))  # TODO optimize
         shape.idx = obj["idx"]
@@ -67,7 +67,7 @@ class Shape:
     def to_json(self, idx):
         self.idx = idx
         return {
-            'id': self.id,
+            'label': self.label,
             'points': [(int(x), int(y)) for x, y in self.points],
             'corners': [(int(x), int(y)) for x, y in self.corners],
             'idx': self.idx
@@ -86,4 +86,4 @@ class Shape:
         return hash(str(sorted(self.points)))
 
     def __str__(self):
-        return "\n".join([f"Id: {self.id}", f"Points: {sorted(self.points)}"])
+        return "\n".join([f"Id: {self.label}", f"Points: {sorted(self.points)}"])

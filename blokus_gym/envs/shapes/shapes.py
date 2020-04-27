@@ -7,7 +7,7 @@ def get_all_shapes():
 
 
 class I1(Shape):
-    id = "I1"
+    label = "I1"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -19,7 +19,7 @@ class I1(Shape):
 
 
 class I2(Shape):
-    id = "I2"
+    label = "I2"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -31,7 +31,7 @@ class I2(Shape):
 
 
 class I3(Shape):
-    id = "I3"
+    label = "I3"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -43,7 +43,7 @@ class I3(Shape):
 
 
 class I4(Shape):
-    id = "I4"
+    label = "I4"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -55,7 +55,7 @@ class I4(Shape):
 
 
 class I5(Shape):
-    id = "I5"
+    label = "I5"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -67,7 +67,7 @@ class I5(Shape):
 
 
 class V3(Shape):
-    id = "V3"
+    label = "V3"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -79,7 +79,7 @@ class V3(Shape):
 
 
 class L4(Shape):
-    id = "L4"
+    label = "L4"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -91,7 +91,7 @@ class L4(Shape):
 
 
 class Z4(Shape):
-    id = "Z4"
+    label = "Z4"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -104,7 +104,7 @@ class Z4(Shape):
 
 
 class O4(Shape):
-    id = "O4"
+    label = "O4"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -116,7 +116,7 @@ class O4(Shape):
 
 
 class L5(Shape):
-    id = "L5"
+    label = "L5"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -128,7 +128,7 @@ class L5(Shape):
 
 
 class T5(Shape):
-    id = "T5"
+    label = "T5"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -141,7 +141,7 @@ class T5(Shape):
 
 
 class V5(Shape):
-    id = "V5"
+    label = "V5"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -153,7 +153,7 @@ class V5(Shape):
 
 
 class N(Shape):
-    id = "N"
+    label = "N"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -166,7 +166,7 @@ class N(Shape):
 
 
 class Z5(Shape):
-    id = "Z5"
+    label = "Z5"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -179,7 +179,7 @@ class Z5(Shape):
 
 
 class T4(Shape):
-    id = "T4"
+    label = "T4"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -192,7 +192,7 @@ class T4(Shape):
 
 
 class P(Shape):
-    id = "P"
+    label = "P"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -204,7 +204,7 @@ class P(Shape):
 
 
 class W(Shape):
-    id = "W"
+    label = "W"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -217,7 +217,7 @@ class W(Shape):
 
 
 class U(Shape):
-    id = "U"
+    label = "U"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -229,7 +229,7 @@ class U(Shape):
 
 
 class F(Shape):
-    id = "F"
+    label = "F"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -242,7 +242,7 @@ class F(Shape):
 
 
 class X(Shape):
-    id = "X"
+    label = "X"
 
     def __init__(self):
         self.set_points(0, 0)
@@ -255,7 +255,7 @@ class X(Shape):
 
 
 class Y(Shape):
-    id = "Y"
+    label = "Y"
 
     def __init__(self):
         self.set_points(0, 0)

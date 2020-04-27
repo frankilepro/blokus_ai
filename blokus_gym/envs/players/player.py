@@ -12,27 +12,27 @@ class Player:
         self.rng = random.Random(0)
         if not deterministic:
             self.rng.seed()
-        self.__set_all_ids_to_move(all_moves)
+        self.__set_all_labels_to_move(all_moves)
 
-    def __set_all_ids_to_move(self, all_moves):
-        self.all_ids_to_move = {}
+    def __set_all_labels_to_move(self, all_moves):
+        self.all_labels_to_move = {}
         for move in all_moves:
-            if move.id not in self.all_ids_to_move:
-                self.all_ids_to_move[move.id] = []
-            self.all_ids_to_move[move.id].append(move)
+            if move.label not in self.all_labels_to_move:
+                self.all_labels_to_move[move.label] = []
+            self.all_labels_to_move[move.label].append(move)
 
         # For performance issue, we shuffle first, then we look "in order" to find the first move
         # in casses when we want to sample a random move
-        for key in self.all_ids_to_move:
-            self.rng.shuffle(self.all_ids_to_move[key])
+        for key in self.all_labels_to_move:
+            self.rng.shuffle(self.all_labels_to_move[key])
 
-    def add_pieces(self, pieces):
+    def set_pieces(self, pieces):
         """
         Gives a player the initial set of pieces.
         """
-        piece_ids = set(p.id for p in pieces)
-        for missing_piece_id in self.all_ids_to_move.keys() - piece_ids:
-            del self.all_ids_to_move[missing_piece_id]
+        piece_labels = set(p.label for p in pieces)
+        for missing_piece_id in piece_labels - self.all_labels_to_move.keys():
+            del self.all_labels_to_move[missing_piece_id]
 
     def start_corner(self, p):
         """
@@ -45,7 +45,7 @@ class Player:
         Removes a given piece (Shape object) from
         the list of pieces a player has.
         """
-        del self.all_ids_to_move[piece.id]
+        del self.all_labels_to_move[piece.label]
 
     def update_player(self, placement, board):
         """
@@ -59,12 +59,12 @@ class Player:
                 self.corners.add(c)
 
     def sample_move(self):
-        keys = list(self.all_ids_to_move.keys())
+        keys = list(self.all_labels_to_move.keys())
         self.rng.shuffle(keys)
         nb = 0
         for key in keys:
             nb += 1
-            for move in self.all_ids_to_move[key]:
+            for move in self.all_labels_to_move[key]:
                 if self.game.valid_move(self, move):
                     return move
         return None
@@ -75,14 +75,14 @@ class Player:
 
     @property
     def remains_move(self):
-        for moves in self.all_ids_to_move.values():
+        for moves in self.all_labels_to_move.values():
             if any(self.game.valid_move(self, move) for move in moves):
                 return True
         return False
 
     def possible_moves_opt(self):
         placements = []
-        for moves in self.all_ids_to_move.values():
+        for moves in self.all_labels_to_move.values():
             placements.extend(move for move in moves if self.game.valid_move(self, move))
         return placements
 

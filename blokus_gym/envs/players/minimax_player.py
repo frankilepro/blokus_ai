@@ -1,147 +1,75 @@
-# pylint: skip-file
+import numpy as np
+from sys import maxsize
+from blokus_gym.envs.players.player import Player
 import copy
+# from multiprocessing import Process, Lock, shared_memory
+from multiprocessing import Pool
+import os
 
 
-def eval_move(piece, player, game, weights):
-    """
-    Takes in a single Piece object and a Player object and returns a integer score that
-    evaluates how "good" the Piece move is. Defined here because used by both Greedy and Minimax.
-    """
-    def check_corners(player):
-        """
-        Updates the corners of the player in the test board (copy), in case the
-        corners have been covered by another player's pieces.
-        """
-        player.corners = set([(i, j) for (i, j) in player.corners if test_board.tensor[j][i] == 0])
-    # get board
-    board = game.board
-    # create a copy of the players in the game
-    test_players = copy.deepcopy(game.players)
-    # create a list of the opponents in the game
-    opponents = [opponent for opponent in test_players if opponent.index != player.index]
-    # create a copy of the board
-    test_board = copy.deepcopy(board)
-    # update the copy of the board with the Piece placement
-    test_board.update(player, piece)
-    # create a copy of the player currently playing
-    test_player = copy.deepcopy(player)
-    # update the current player (update corners) with the current Piece placement
-    test_player.update_player(piece, test_board)
-    # calculate how many corners the current player has
-    my_corners = len(test_player.corners)
-    # update the corners for all opponents
-    list(map(check_corners, opponents))
-    # calculate the mean of the corners of the opponents
-    opponent_corners = [len(opponent.corners) for opponent in opponents]
-    # find the difference between the number of corners the current player has and and the
-    # mean number of corners the opponents have
-    corner_difference = np.mean([my_corners - opponent_corner for opponent_corner in opponent_corners])
-    # return the score = size + difference in the number of corners
-    return (piece, weights[0] * piece.size + weights[1] * corner_difference)
+def iterate_over_moves(player, depth, possible_moves, prev_moves):
+    score_move = [None, [- maxsize - 1] * len(player.game.players)]
+    for move in possible_moves:
+        node = copy.deepcopy(player.game)
+        MinimaxPlayer.play_without_do_move(node, move)
+        current_score = MinimaxPlayer.minimax(node, depth - 1, depth, prev_moves + [move])
+        score_move = max(score_move, current_score, key=lambda x: x[1][player.index - 1])
+    return score_move
 
 
-def Minimax_Player(player, game, weights):
-    # takes in a player and a board, and updates the player's corners depending on the state of the board
-    def check_corners(player, board):
-        """
-        Updates the corners of the player in the test board (copy), in case the
-        corners have been covered by another player's pieces.
-        """
-        player.corners = set([(i, j) for (i, j) in player.corners if board.tensor[j][i] == 0])
-    # create a copy of the player's pieces
-    shape_options = [p for p in player.pieces]
-    # determine all possible moves
-    possibles = player.possible_moves(shape_options, game)
-    final_choices = []
-    # if there are possible moves:
-    if possibles != []:
-        # function for evaluating moves (for mapping purposes)
-        def eval_map(piece):
-            return eval_move(piece, player, game, weights)
-        # evaluate every possible move
-        candidate_moves = list(map(eval_map, possibles))
-        # create list of tuples (piece, score), sorted by score
-        by_score = sorted(candidate_moves, key=lambda move: move[1], reverse=True)
-        # take at most the n highest scoring moves
-        if len(by_score) > weights[2]:
-            top_choices = by_score[:weights[2]]
-        else:
-            top_choices = by_score
-        for (piece, score) in top_choices:
-            # create a copy of the game
-            game_copy = copy.deepcopy(game)
-            # get board from the game copy (we will be playing on this board)
-            board = game_copy.board
-            # create a copy of the players in the game
-            test_players = copy.deepcopy(game.players)
-            # create a list of the opponents in the game
-            opponents = [opponent for opponent in test_players if opponent.label != player.label]
-            # create a copy of the player currently playing
-            test_player = copy.deepcopy(player)
-            # update the copy of the board with the Piece placement
-            board.update(test_player, piece)
-            # update the current player (update corners) with the current Piece placement
-            test_player.update_player(piece, board)
-            # update the corners for all opponents
+class MinimaxPlayer(Player):
 
-            def check_cor_map(opponent):
-                return check_corners(opponent, board)
-            list(map(check_cor_map, opponents))
-            # create a copy of the pieces that the current player has
-            piece_copies = copy.deepcopy(shape_options)
-            # remove the Piece that was just placed on the board
-            piece_copies = [p for p in piece_copies if p.id != piece.id]
-            # OPPONENTS' TURN TO PLACE PIECE
-            # for each opponent:
-            for opponent in opponents:
-                # create a list of tuples (size, piece) for the opponent, sorted by size
-                by_size_op = sorted([(shape.size, shape) for shape in opponent.pieces], reverse=True)
-                # extract pieces from by_size_op list
-                by_size_op_pieces = [piece_by_size[1] for piece_by_size in by_size_op]
-                # create a list of all the opponent's possible moves
-                possibles_op = opponent.possible_moves(by_size_op_pieces, game_copy)
-                # if there are possible moves left:
-                if possibles_op != []:
-                    # create an empty list to store evaluations of possible moves
-                    final_moves_op = []
-                    # evaluate every possible move; store in final_moves_op
-                    for poss in possibles_op:
-                        final_moves_op.append(eval_move(poss, opponent, game_copy, weights))
-                    # create list of tuples (piece, score), sorted by score
-                    by_score_op = sorted(final_moves_op, key=lambda move: move[1], reverse=True)
-                    # take the highest scoring move
-                    best_move = by_score_op[0][0]
-                    # update the board with the highest scoring move
-                    board.update(opponent, best_move)
-                    # create a list of the other opponents
-                    # other_opponents = [enemy for enemy in game_copy.players if enemy.label != opponent.label]
-                    # update the corners of the other opponents
-                    list(map(check_cor_map, test_players))
-                # if there are no possible moves left for the opponent, return the piece
-                else:
-                    return piece
-            # BOARD HAS BEEN UPDATED; OPPONENTS HAVE FINISHED THEIR TURNS
-            # create list of all possible moves
-            possibles_2 = test_player.possible_moves(piece_copies, game_copy)
-            # if there are possible moves left:
-            if possibles_2 != []:
-                final_moves_2 = []
-                # evaluate each move; append to list of tuples (piece, score)
-                for possible in possibles_2:
-                    final_moves_2.append(eval_move(possible, test_player, game_copy, weights))
-                # create a list of tuples (piece, score), sorted by score
-                by_score_2 = sorted(final_moves_2, key=lambda move: move[1], reverse=True)
-                # calculate the best score for each initial piece (can be weighted differently)
-                best_score = weights[3] * by_score_2[0][1] + weights[4] * score
-                # append initial piece plus potential score to final_choices
-                final_choices.append((piece, best_score))
-            # if there are no possible moves left, add the first played piece to the final_choices list
-            else:
-                final_choices.append((piece, score))
-        # sort the list of final_choices by score
-        final_choices = sorted(final_choices, key=lambda move: move[1], reverse=True)
-        # return the highest scoring move
-        return final_choices[0][0]
-    # if there are no possible moves left, return None
-    else:
-        return None
+    @staticmethod
+    def score_players(game):
+        scores = np.zeros(len(game.players))
+        for player in game.players:
+            scores[player.index - 1] = len(player.corners) + 5 * player.score
+        return 2 * scores - np.sum(scores)
+
+    @staticmethod
+    def play_without_do_move(game, move):
+        if game.winners() is None:
+            current = game.players[0]
+            # print("Current player: " + current.name)
+            proposal = move
+            if proposal is None:
+                # move on to next player, increment rounds
+                first = game.players.pop(0)
+                game.players = game.players + [first]
+                game.rounds += 1
+            # ensure that the proposed move is valid
+            elif game.valid_move(current, proposal):
+                # update the board with the move
+                game.board.update(current, proposal)
+                # let the player update itself accordingly
+                current.update_player(proposal, game.board)
+                # remove the piece that was played from the player
+                current.remove_piece(proposal)
+                # place the player at the back of the queue
+                first = game.players.pop(0)
+                game.players = game.players + [first]
+                # increment the number of rounds just played
+                game.rounds += 1
+
+    @staticmethod
+    def minimax(game, depth, start_depth, prev_moves):
+        player = game.next_player()
+        possible_moves = [move for move in player.possible_moves_opt() if game.valid_move(player, move)]
+        nb_possible_moves = len(possible_moves)
+        if depth < 0 or nb_possible_moves == 0:
+            return [prev_moves, MinimaxPlayer.score_players(game)]
+
+        if depth == start_depth and nb_possible_moves >= os.cpu_count():
+            process_split_factor = nb_possible_moves // os.cpu_count()
+            split_possible_moves = np.split(possible_moves, list(range(0, nb_possible_moves, process_split_factor)))[1:]
+            args = [(player, depth, moves, prev_moves) for moves in split_possible_moves]
+            with Pool(os.cpu_count()) as pool:
+                scores = (pool.starmap(iterate_over_moves, args))
+                max_score = max(scores, key=lambda x: x[1][player.index - 1])
+                return max_score
+
+        return iterate_over_moves(player, depth, possible_moves, prev_moves)
+
+    def do_move(self):
+        moves = MinimaxPlayer.minimax(copy.deepcopy(self.game), 1, 1, [])[0]
+        return moves[0] if moves else None

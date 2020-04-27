@@ -1,6 +1,7 @@
 from blokus_gym.envs.blokus_env import BlokusEnv
 from blokus_gym.envs.shapes.shapes import get_all_shapes
 from blokus_gym.envs.players.greedy_player import GreedyPlayer
+from blokus_gym.envs.players.minimax_player import MinimaxPlayer
 
 
 class BlokusGreedyEnv(BlokusEnv):
@@ -26,3 +27,7 @@ class BlokusSimpleEnv(BlokusEnv):
 
 class BlokusSimpleGreedyEnv(BlokusSimpleEnv):
     bot_type = GreedyPlayer
+
+
+class BlokusSimpleMinimaxEnv(BlokusSimpleEnv):
+    bot_type = MinimaxPlayer

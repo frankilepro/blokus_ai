@@ -12,6 +12,7 @@ ext_modules = [
     Extension("blokus_gym.envs.players.player", ["blokus_gym/envs/players/player.py"]),
     Extension("blokus_gym.envs.players.random_player", ["blokus_gym/envs/players/random_player.py"]),
     Extension("blokus_gym.envs.players.greedy_player", ["blokus_gym/envs/players/greedy_player.py"]),
+    Extension("blokus_gym.envs.players.minimax_player", ["blokus_gym/envs/players/minimax_player.py"]),
     Extension("blokus_gym.envs.game.blokus_game", ["blokus_gym/envs/game/blokus_game.py"]),
     Extension("blokus_gym.envs.game.board", ["blokus_gym/envs/game/board.py"]),
 ]

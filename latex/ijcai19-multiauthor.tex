@@ -63,60 +63,137 @@ $^1$École Polytechnique de Montréal\\
 \maketitle
 
 
-
 \begin{abstract}
-  The {\it IJCAI--19 Proceedings} will be printed from electronic
-  manuscripts submitted by the authors. The electronic manuscript will
-  also be included in the online version of the proceedings. This paper
-  provides the style instructions.
+  Presentation des resultats et petite entree vrm cheasy af yoan est sexy!!!
 \end{abstract}
 
 \section{Introduction}
 
-The {\it IJCAI--19 Proceedings} will be printed from electronic
-manuscripts submitted by the authors. These must be PDF ({\em Portable
-Document Format}) files formatted for 8-1/2$''$ $\times$ 11$''$ paper.
+Recent superhuman performance achievements in the game of Go by \cite{alphaGo} and also in chess with \cite{alphaZero} have helped cause a huge spike in reinforcement learning use cases. These methods use a general purpose Monte Carlo Tree Search and self play algorithms to maximize the expected outcome. On another approach, \cite{rainbow} tries to boost the performance of all the DQN alternatives, but has mostly been tested on Atari games with a much simpler action space than the previous board games, for exemple, the game of Pong only has two possible moves at almost every moment. This paper examines the performance of Rainbow on the board game of Blokus which has a good in between number of actions per move.
 
-\subsection{Length of Papers}
+\subsection{The Game of Blokus}
 
-All paper {\em submissions} must have a maximum of six pages, plus at most one for references. The seventh page cannot contain {\bf anything} other than references.
+Blokus\footnote{\url{https://en.wikipedia.org/wiki/Blokus}} is a French board game that was invented in 2000. In the original game, every player gets 21 pieces, each consisting of 1 to 5 tiles. At each turn, the player is allowed to play one piece and the new tile can only be placed from corners to corners from the current player tiles. This means that the new tiles cannot touch any side of any other tiles from the current player, it however can touch anything from other players. An example is shown in figure \ref{fig:moves}. This is where the name "block us" comes from, the idea is to block the corners of the other players resulting in less possible moves for them. The game finishes when everyone is out of moves and the winner is the one that covers the biggest area. In other words, the one that placed the most tiles, not necessarily pieces.
 
-The length rules may change for final camera-ready versions of accepted papers, and will differ between tracks. Some tracks may include only references in the last page, whereas others allow for any content in all pages. Similarly, some tracks allow you to buy a few extra pages should you want to, whereas others don't.
+\begin{figure}[h!]
+  \caption{A good and a bad move}
+  \label{fig:moves}
+\begin{minipage}{6in}
+  \hspace*{.3in}
+  \raisebox{-0.25\height}{\includegraphics[height=1.25in]{good_move.png}}
+  \hspace*{.2in}
+  \raisebox{-0.25\height}{\includegraphics[height=1in]{bad_move.png}}
+\end{minipage}
+\end{figure}
 
-If your paper is accepted, please carefully read the notifications you receive, and check the proceedings submission information website\footnote{\url{https://proceedings.ijcai.org/info}} to know how many pages you can finally use (and whether there is a special references-only page or not). That website holds the most up-to-date information regarding paper length limits at all times.
+\subsection{The DQN Algorithms}
 
-\subsection{Word Processing Software}
+The Deep Q-Learning method was brought by \cite{rainbow} to solve many reinforcement learning problems. Multiple researches have been done after that to try to improve the efficiency on multiple different use cases and environments.
+\\\\ % TODO MAYBE REMOVE LATER
 
-As detailed below, IJCAI has prepared and made available a set of
-\LaTeX{} macros and a Microsoft Word template for use in formatting
-your paper. If you are using some other word processing software, please follow the format instructions given below and ensure that your final paper looks as much like this sample as possible.
-
-\section{Style and Format}
-
-\LaTeX{} and Word style files that implement these instructions
-can be retrieved electronically. (See Appendix~\ref{stylefiles} for
-instructions on how to obtain these files.)
-
-\subsection{Layout}
-
-Print manuscripts two columns to a page, in the manner in which these
-instructions are printed. The exact dimensions for pages are:
+This paper focuses on the Rainbow algorithm which combines:
 \begin{itemize}
-\item left and right margins: .75$''$
-\item column width: 3.375$''$
-\item gap between columns: .25$''$
-\item top margin---first page: 1.375$''$
-\item top margin---other pages: .75$''$
-\item bottom margin: 1.25$''$
-\item column height---first page: 6.625$''$
-\item column height---other pages: 9$''$
+\item Regular DQN
+\item Double DQN (DDQN)
+\item Prioritized DDQN
+\item Dueling DDQN
+\item Distributional DQN
+\item Noisy DQN
+\end{itemize}
+All those, to create the best possible results.
+
+\section{Methodology}
+
+This section details how the action and observation spaces are organized over multiple environments and the model is constructed.
+
+\subsection{Observation and Action Spaces}
+
+For this task we created 9 Open AI \footnote{\url{https://openai.com/}} Gym Environments \footnote{\url{https://gym.openai.com/docs/}} consisting of three different boards:
+\begin{itemize}
+\item Simple: a smaller representation of the game for faster training time and a proof of concept. This board is only for two players and all the 5 tiles pieces have been removed.
+\item Duo: this is the official Blokus duo game
+\item Hard: this is also the official and original Blokus game
 \end{itemize}
 
-All measurements assume an 8-1/2$''$ $\times$ 11$''$ page size. For
-A4-size paper, use the given top and left margins, column width,
-height, and gap, and modify the bottom and right margins as necessary.
+Each with the possibility of being played against three different bots: 
+\begin{itemize}
+\item Random: selects randomly between all the possible moves
+\item Greedy: maximizes the number of tiles and then the number of newly blocked and opened corners)
+\item Minimax: same as greedy but with 3 recursive calls
+\end{itemize}
 
-\subsection{Format of Electronic Manuscript}
+The representation of the various boards available can be found in \ref{tab:boards}
+\begin{table}
+\centering
+\begin{tabular}{llll}
+\hline
+ & Simple [\ref{fig:simpleBoard}] & Duo [\ref{fig:duoBoard}] & Hard [\ref{fig:hardBoard}] \\
+\hline
+Board Size & $7\times7$ & $14\times14$ & $21\times21$ \\
+Players & 2 & 2 & 4 \\
+Observations & 147 & 588 & 2205 \\
+Pieces & 12 & 21 & 21 \\
+Actions & 919 & 13 729 & 33 854 \\
+Mean per turn & 19 & 160 & 205 \\
+\hline
+\end{tabular}
+\caption{Difficulties per board type}
+\label{tab:boards}
+\end{table}
+
+\begin{figure}[h!]
+\centering
+  \caption{The simple board}
+  \label{fig:simpleBoard}
+\includegraphics[height=2in]{simple_game.png}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \caption{The duo board}
+  \label{fig:duoBoard}
+\includegraphics[height=2in]{duo_game.png}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \caption{The hard board}
+  \label{fig:hardBoard}
+\includegraphics[height=2in]{hard_game.png}
+\end{figure}
+
+Every tile can either be the player's id (i.e. 1, 2, 3 or 4) or empty (0). The general formula is then described in \ref{formula:observation}
+\begin{align}
+\textit{Observations} = \textit{Board Size} \times (\textit{Players} + 1)
+\label{formula:observation}
+\end{align}
+
+The number of possible actions is a bit more tricky. It is all the possible placements of all the pieces. It can be the 4 rotations (0, 90, 180 and 270 degrees) combined with a flip (either horizontal or vertical) and then placed on all the available translations on the board. Some pieces are harder to calculate than others, but
+ it is easier to test all the combinations experimentally and come out with the number as it is shown in \ref{tab:boards} next to the Actions row. The Mean per turn row measures the average number of available moves per turn, the RL agent tries to take the best out of this number per turn. These results come from 100 simulations ran with random agents.
+ 
+\begin{figure}[h!]
+\centering
+  \caption{The 8 placements for the L4 piece}
+  \label{fig:8moves}
+\includegraphics[height=1.5in]{8_moves.png}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \caption{The single placement for the X5 piece}
+  \label{fig:singleMove}
+\includegraphics[height=0.75in]{single_move.png}
+\end{figure}
+
+Finally, the rewards go as follow:
+\begin{itemize}
+\item +1 for a win
+\item -1 for a lost
+\item 0 for a tie
+\item 0 for any other move
+\end{itemize}
+ 
+\subsection{Model Architecture}
 
 For the production of the electronic manuscript, you must use Adobe's
 {\em Portable Document Format} (PDF). A PDF file can be generated, for
@@ -274,7 +351,7 @@ line.\footnote{Note the line separating these footnotes from the
 text.} Avoid footnotes as much as possible; they interrupt the flow of
 the text.
 
-\section{Illustrations}
+\section{Results}
 
 Place all illustrations (figures, drawings, tables, and photographs)
 throughout the paper at the places where they are first discussed,
@@ -298,7 +375,7 @@ under illustrations. Leave a margin of 1/4-inch around the area
 covered by the illustration and caption.  Use 9-point type for
 captions, labels, and other text in illustrations. Captions should always appear below the illustration.
 
-\section{Tables}
+\section{Analysis}
 
 Tables are considered illustrations containing data. Therefore, they should also appear floated to the top (preferably) or bottom of the page, and with the captions below them.
 
@@ -344,7 +421,7 @@ If you are using \LaTeX, you should use the {\tt booktabs} package, because it p
     \item We avoid unnecessary repetition, both between lines (no need to repeat the scenario name in this case) as well as in the content (units can be shown in the column header).
 \end{enumerate}
 
-\section{Formulas}
+\section{Conclusion}
 
 IJCAI's two-column format makes it difficult to typeset long formulas. A usual temptation is to reduce the size of the formula by using the {\tt small} or {\tt tiny} sizes. This doesn't work correctly with the current \LaTeX{} versions, breaking the line spacing of the preceding paragraphs and title, as well as the equation number sizes. The following equation demonstrates the effects (notice that this entire paragraph looks badly formatted):
 %

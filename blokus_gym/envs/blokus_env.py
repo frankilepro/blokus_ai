@@ -2,6 +2,7 @@
 # Inspired from https://github.com/mknapper1/Machine-Learning-Blokus
 import json
 import multiprocessing as mp
+import random
 import itertools
 from functools import partial
 import os
@@ -61,7 +62,7 @@ class BlokusEnv(gym.Env):
                               self.blokus_game, deterministic=False)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]
         ordering = [self.ai] + bots
-        # random.shuffle(ordering)
+        random.shuffle(ordering)
         for player in ordering:
             self.blokus_game.add_player(player)
 
@@ -141,8 +142,8 @@ class BlokusEnv(gym.Env):
         return mask
 
     def __set_all_possible_moves(self):
-        if self.all_possible_indexes_to_moves is not None:
-            return
+        # if self.all_possible_indexes_to_moves is not None:
+        #     return
 
         state_file = os.path.join(self.STATES_FOLDER, self.STATES_FILE)
         if os.path.exists(state_file):
