@@ -1,10 +1,10 @@
-import numpy as np
 from sys import maxsize
-from blokus_gym.envs.players.player import Player
 import copy
-# from multiprocessing import Process, Lock, shared_memory
 from multiprocessing import Pool
 import os
+import numpy as np
+
+from blokus_gym.envs.players.player import Player
 
 
 def iterate_over_moves(player, depth, possible_moves, prev_moves):
