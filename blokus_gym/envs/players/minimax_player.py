@@ -1,10 +1,10 @@
-import numpy as np
 from sys import maxsize
-from blokus_gym.envs.players.player import Player
 import copy
-# from multiprocessing import Process, Lock, shared_memory
 from multiprocessing import Pool
 import os
+import numpy as np
+
+from blokus_gym.envs.players.player import Player
 
 
 def iterate_over_moves(player, depth, possible_moves, prev_moves):
@@ -54,17 +54,16 @@ class MinimaxPlayer(Player):
     @staticmethod
     def minimax(game, depth, start_depth, prev_moves):
         player = game.next_player()
-        possible_moves = [move for move in player.possible_moves_opt() if game.valid_move(player, move)]
+        possible_moves = player.possible_moves_opt()
+        np.random.shuffle(possible_moves)
         nb_possible_moves = len(possible_moves)
         if depth < 0 or nb_possible_moves == 0:
             return [prev_moves, MinimaxPlayer.score_players(game)]
 
-        if depth == start_depth and nb_possible_moves >= os.cpu_count():
-            process_split_factor = nb_possible_moves // os.cpu_count()
-            split_possible_moves = np.split(possible_moves, list(range(0, nb_possible_moves, process_split_factor)))[1:]
-            args = [(player, depth, moves, prev_moves) for moves in split_possible_moves]
+        if depth == start_depth:
+            args = [(player, depth, [move], prev_moves) for move in possible_moves]
             with Pool(os.cpu_count()) as pool:
-                scores = (pool.starmap(iterate_over_moves, args))
+                scores = pool.starmap(iterate_over_moves, args)
                 max_score = max(scores, key=lambda x: x[1][player.index - 1])
                 return max_score
 
