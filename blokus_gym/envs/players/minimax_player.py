@@ -55,6 +55,7 @@ class MinimaxPlayer(Player):
     def minimax(game, depth, start_depth, prev_moves):
         player = game.next_player()
         possible_moves = player.possible_moves_opt()
+        np.random.shuffle(possible_moves)
         nb_possible_moves = len(possible_moves)
         if depth < 0 or nb_possible_moves == 0:
             return [prev_moves, MinimaxPlayer.score_players(game)]
