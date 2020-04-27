@@ -13,8 +13,6 @@ from blokus_gym.envs.game.blokus_game import InvalidMoveByAi
 from blokus_gym.envs.game.blokus_game import BlokusGame
 from blokus_gym.envs.game.board import Board
 from blokus_gym.envs.players.ai_player import AiPlayer
-from blokus_gym.envs.players.greedy_player import GreedyPlayer
-from blokus_gym.envs.players.minimax_player import MinimaxPlayer
 from blokus_gym.envs.players.random_player import RandomPlayer
 from blokus_gym.envs.players.player import Player
 from blokus_gym.envs.shapes.shape import Shape
@@ -59,7 +57,7 @@ class BlokusEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(len(self.all_possible_indexes_to_moves))
         self.action_space.sample = self.ai_sample_possible_index
 
-        self.ai = MinimaxPlayer(1, f"bot_1", self.all_possible_indexes_to_moves, self.blokus_game)
+        self.ai = AiPlayer(1, "ai", self.all_possible_indexes_to_moves, self.blokus_game)
         bots = [self.bot_type(id, f"bot_{id}", self.all_possible_indexes_to_moves,
                               self.blokus_game, deterministic=False)
                 for id in range(2, self.NUMBER_OF_PLAYERS + 1)]

@@ -2,16 +2,17 @@ import numpy as np
 from sys import maxsize
 from blokus_gym.envs.players.player import Player
 import copy
-from multiprocessing import Pool, Lock
+# from multiprocessing import Process, Lock, shared_memory
+from multiprocessing import Pool
 import os
 
 
 def iterate_over_moves(player, depth, possible_moves, prev_moves):
     score_move = [None, [- maxsize - 1] * len(player.game.players)]
     for move in possible_moves:
-        MinimaxPlayer.play_without_do_move(player.game, move)
-        current_score = MinimaxPlayer.minimax(player.game, depth - 1, depth, prev_moves + [move])
-        MinimaxPlayer.undo_play_without_do_move(player.game, move)
+        node = copy.deepcopy(player.game)
+        MinimaxPlayer.play_without_do_move(node, move)
+        current_score = MinimaxPlayer.minimax(node, depth - 1, depth, prev_moves + [move])
         score_move = max(score_move, current_score, key=lambda x: x[1][player.index - 1])
     return score_move
 
@@ -51,21 +52,6 @@ class MinimaxPlayer(Player):
                 game.rounds += 1
 
     @staticmethod
-    def undo_play_without_do_move(game, move):
-        last = game.players[-1]
-        proposal = move
-        # update the board with the move
-        game.board.undo_update(last, proposal)
-        # let the player update itself accordingly
-        last.undo_update_player(proposal)
-        # remove the piece that was played from the player
-        last.undo_remove_piece()
-        # place the player at the back of the queue
-        last = game.players.pop()
-        game.players = [last] + game.players
-        game.rounds -= 1
-
-    @staticmethod
     def minimax(game, depth, start_depth, prev_moves):
         player = game.next_player()
         possible_moves = [move for move in player.possible_moves_opt() if game.valid_move(player, move)]
@@ -85,5 +71,5 @@ class MinimaxPlayer(Player):
         return iterate_over_moves(player, depth, possible_moves, prev_moves)
 
     def do_move(self):
-        moves = MinimaxPlayer.minimax(copy.deepcopy(self.game), 1, -1, [])[0]
+        moves = MinimaxPlayer.minimax(copy.deepcopy(self.game), 1, 1, [])[0]
         return moves[0] if moves else None
