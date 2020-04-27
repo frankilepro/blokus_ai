@@ -59,12 +59,10 @@ class MinimaxPlayer(Player):
         if depth < 0 or nb_possible_moves == 0:
             return [prev_moves, MinimaxPlayer.score_players(game)]
 
-        if depth == start_depth and nb_possible_moves >= os.cpu_count():
-            process_split_factor = nb_possible_moves // os.cpu_count()
-            split_possible_moves = np.split(possible_moves, list(range(0, nb_possible_moves, process_split_factor)))[1:]
-            args = [(player, depth, moves, prev_moves) for moves in split_possible_moves]
+        if depth == start_depth:
+            args = [(player, depth, [move], prev_moves) for move in possible_moves]
             with Pool(os.cpu_count()) as pool:
-                scores = (pool.starmap(iterate_over_moves, args))
+                scores = pool.starmap(iterate_over_moves, args)
                 max_score = max(scores, key=lambda x: x[1][player.index - 1])
                 return max_score
 
