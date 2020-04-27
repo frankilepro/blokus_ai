@@ -6,7 +6,7 @@ from rainbow.agent import Agent
 if __name__ == "__main__":
     env = gym.make("blokus_gym:blokus-simple-v0")
     memory_size = 1000
-    num_episodes = 11
+    num_episodes = 5000
     batch_size = 32
     learning_rate = 0.001
     model_filename = "blokus-train"
@@ -30,40 +30,35 @@ if __name__ == "__main__":
         "is_distributional": False,
         "nsteps": None
     }
-    conf_names = ["Rainbow", "DQN", "No Double", "No Dueling", "No PER", "No Noisy", "No Distributional", "No N-steps"]
-    names = conf_names[:2]
 
-    results = {}
-
-    for idx, config in enumerate([config_rainbow, config_dqn]):
-        print(config)
-        agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename,
-                      nsteps=config["nsteps"], is_double=config["is_double"], is_dueling=config["is_dueling"],
-                      is_noisy=config["is_noisy"], is_distributional=config["is_distributional"],
-                      distr_params=dist_params, is_prioritized=config["is_prioritized"],
-                      prioritized_params=prioritized_params)
-        scores = agent.train()
-        results[names[idx]] = scores
-        scores_df = pd.DataFrame(results, columns=conf_names)
-        scores_df.to_csv("results_dqn.csv")
-
-    names = conf_names[2:]
-
+    configs = [config_rainbow, config_dqn]
     for idx, key in enumerate(config_rainbow.keys()):
         config = config_dqn.copy()
         config[key] = True
         if key == "nsteps":
             config[key] = 3
+        configs.append(config)
 
+    for idx, key in enumerate(config_rainbow.keys()):
+        config = config_rainbow.copy()
+        config[key] = False
+        if key == "nsteps":
+            config[key] = None
+        configs.append(config)
+
+    conf_names = ["Rainbow", "DQN", "Double", "Dueling", "PER", "Noisy", "Distributional", "N-Steps", "No Double",
+                  "No Dueling", "No PER", "No Noisy", "No Distributional", "No N-steps"]
+
+    results = {}
+
+    for idx, config in enumerate(configs):
         print(config)
         agent = Agent(env, memory_size, batch_size, learning_rate, num_episodes, model_filename,
                       nsteps=config["nsteps"], is_double=config["is_double"], is_dueling=config["is_dueling"],
                       is_noisy=config["is_noisy"], is_distributional=config["is_distributional"],
                       distr_params=dist_params, is_prioritized=config["is_prioritized"],
                       prioritized_params=prioritized_params)
-
         scores = agent.train()
-        results[names[idx]] = scores
+        results[conf_names[idx]] = scores
         scores_df = pd.DataFrame(results, columns=conf_names)
-        scores_df.to_csv("results_.csv")
-        scores_df = scores_df.reset_index()
+        scores_df.to_csv("results_all.csv")
