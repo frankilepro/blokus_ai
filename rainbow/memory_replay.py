@@ -6,7 +6,7 @@ from rainbow.segment_tree import MinSegmentTree, SumSegmentTree
 
 
 class ReplayMemory:
-    def __init__(self, max_size, batch_size, gamma=0.99, nsteps=None):
+    def __init__(self, max_size, batch_size, gamma=0.9, nsteps=None):
         self.max_size = max_size
         self.batch_size = batch_size
         self.memory = deque([], maxlen=max_size)

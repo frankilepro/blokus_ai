@@ -1,15 +1,13 @@
 import os
 
 import gym
-import torch.optim as optim
-from torch.nn.utils import clip_grad_norm_
-import csv
-import pandas as pd
-import matplotlib.pyplot as plt
 import torch
+import torch.optim as optim
+import torch.nn.functional as F
+import numpy as np
 
 from rainbow.memory_replay import ReplayMemory, PrioritizedExperienceReplay
-from rainbow.models import *
+from rainbow import models
 
 
 class Agent:
@@ -77,23 +75,19 @@ class Agent:
             self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
                                                           self.distr_params["v_max"],
                                                           self.distr_params["num_bins"]).to(self.device)
-            self.model = DuelingDistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params, is_noisy)\
-                .to(self.device)
+            self.model = models.DuelingDistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params,
+                                                             is_noisy).to(self.device)
 
         elif self.is_distributional:
             self.distr_params["v_range"] = torch.linspace(self.distr_params["v_min"],
                                                           self.distr_params["v_max"],
                                                           self.distr_params["num_bins"]).to(self.device)
-            self.model = DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params, self.is_noisy)\
-                .to(self.device)
-        elif self.is_noisy and self.is_dueling:
-            self.model = NoisyDuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
+            self.model = models.DistributionalNetwork(self.obs_size, env.action_space.n, self.distr_params,
+                                                      self.is_noisy).to(self.device)
         elif self.is_dueling:
-            self.model = DuelingNetwork(self.obs_size, env.action_space.n).to(self.device)
-        elif self.is_noisy:
-            self.model = NoisyNetwork(self.obs_size, env.action_space.n).to(self.device)
+            self.model = models.DuelingNetwork(self.obs_size, env.action_space.n, is_noisy=is_noisy).to(self.device)
         else:
-            self.model = DQN(self.obs_size, env.action_space.n).to(self.device)
+            self.model = models.DQN(self.obs_size, env.action_space.n, is_noisy=is_noisy).to(self.device)
 
         self.is_double = is_double
         self.loss = []
@@ -137,7 +131,6 @@ class Agent:
         self.loss.append(loss)
         self.optimizer.zero_grad()
         loss.backward()
-        clip_grad_norm_(self.model.parameters(), 10.0)
         self.optimizer.step()
 
         if self.is_noisy:
@@ -176,8 +169,8 @@ class Agent:
                                                     (next_action_distr * (delta - delta.floor())).reshape(-1))
         if self.is_prioritized:
             return - (distr_projection * log_action_distr).sum(1)
-        else:
-            return - (distr_projection * log_action_distr).sum(1).mean()
+
+        return - (distr_projection * log_action_distr).sum(1).mean()
 
     def get_target_double(self, next_state, possible_move):
         action = self.model(next_state, possible_move).argmax(dim=1, keepdim=True)
@@ -185,12 +178,12 @@ class Agent:
 
     def get_target(self, reward, done, next_state, possible_move):
         if self.is_double:
-            next_state_max_Q = self.get_target_double(next_state, possible_move)
+            next_state_max_q = self.get_target_double(next_state, possible_move)
         else:
-            next_state_max_Q = self.model(next_state, possible_move).max(dim=1, keepdim=True).values
+            next_state_max_q = self.model(next_state, possible_move).max(dim=1, keepdim=True).values
 
         # y = r if done, y = r + gamma * max Q(s',a') if not done
-        q = (1 - done.float()) * next_state_max_Q * self.gamma
+        q = (1 - done.float()) * next_state_max_q * self.gamma
         q[torch.isnan(q)] = 0
         return q + reward.float()
 
@@ -225,8 +218,8 @@ class Agent:
                 next_state = self.ohe(next_state)
 
                 if self.is_prioritized:
-                    self.prioritized_params["b"] = min(1.0, i / self.num_episodes) * (
-                                                   1 - self.prioritized_params["b"]) + self.prioritized_params["b"]
+                    self.prioritized_params["b"] = min(1.0, i / self.num_episodes) * \
+                        (1 - self.prioritized_params["b"]) + self.prioritized_params["b"]
                     self.memory.update_beta(self.prioritized_params["b"])
 
                 if self.nsteps is not None:
@@ -267,30 +260,33 @@ class Agent:
         state = self.ohe(self.env.reset())
         self.eps = 0.0
         num_win = 0
-        for episode in range(self.num_episodes):
+        num_ties = 0
+        for _ in range(self.num_episodes):
             done = False
             rewards = 0
             self.env.reset()
             while not done:
                 action = self.eps_greedy_action(state)
-                next_state, reward, done, info = self.env.step(action)
-                self.env.render("human")
+                next_state, reward, done, _ = self.env.step(action)
+                # self.env.render("human")
                 rewards += reward
                 state = self.ohe(next_state)
             if rewards == 1:
                 num_win += 1
+            elif rewards == 0:
+                num_ties += 1
 
-        print("{} victories out of {} games.".format(num_win, self.num_episodes))
+        print("{} victories and {} ties out of {} games.".format(num_win, num_ties, self.num_episodes))
         self.env.close()
 
 
 if __name__ == "__main__":
-    env = gym.make("blokus_gym:blokus-simple-v0")
+    env = gym.make("blokus_gym:blokus-simple-greedy-v0")
     memory_size = 1000
     num_episodes = 5000
     batch_size = 32
     learning_rate = 0.001
-    model_filename = "blokus-train4"
+    model_filename = "blokus"
 
     dist_params = {"num_bins": 51, "v_min": -1.0, "v_max": 1.0}
     prioritized_params = {"a": 0.6, "b": 0.6, "eps": 1e-5}
