@@ -1,7 +1,7 @@
 # blokus-ai
 
-![Blokus Gym Environment](https://github.com/frankilepro/blokus_ai/workflows/Blokus%20Gym%20Environment/badge.svg)
-![Upload Blokus Gym Env to PyPi](https://github.com/frankilepro/blokus_ai/workflows/Upload%20Blokus%20Gym%20Env%20to%20PyPi/badge.svg)
+[![Blokus Gym Environment](https://github.com/frankilepro/blokus_ai/workflows/Blokus%20Gym%20Environment/badge.svg)](https://github.com/frankilepro/blokus_ai/actions?query=workflow%3A%22Blokus+Gym+Environment%22)
+[![Upload Blokus Gym Env to PyPi](https://github.com/frankilepro/blokus_ai/workflows/Upload%20Blokus%20Gym%20Env%20to%20PyPi/badge.svg)](https://github.com/frankilepro/blokus_ai/actions?query=workflow%3A%22Upload+Blokus+Gym+Env+to+PyPi%22)
 
 ## Install project locally
 
