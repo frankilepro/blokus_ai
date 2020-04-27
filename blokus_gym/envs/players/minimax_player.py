@@ -54,7 +54,7 @@ class MinimaxPlayer(Player):
     @staticmethod
     def minimax(game, depth, start_depth, prev_moves):
         player = game.next_player()
-        possible_moves = [move for move in player.possible_moves_opt() if game.valid_move(player, move)]
+        possible_moves = player.possible_moves_opt()
         nb_possible_moves = len(possible_moves)
         if depth < 0 or nb_possible_moves == 0:
             return [prev_moves, MinimaxPlayer.score_players(game)]
