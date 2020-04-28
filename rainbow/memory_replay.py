@@ -118,4 +118,4 @@ class PrioritizedExperienceReplay(ReplayMemory):
             batch.append(self.memory[i])
         states, actions, next_states, rewards, dones, possible_moves = self.create_batch(batch)
         return states, actions, next_states, rewards, dones, possible_moves, indices, torch.tensor(
-            weights)  # pylint: disable=not-callable
+            weights)  # pylint: disable-all
