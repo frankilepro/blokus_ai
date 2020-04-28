@@ -2,12 +2,12 @@ import gym
 from rainbow.agent import Agent
 
 if __name__ == "__main__":
-    env = gym.make("blokus_gym:blokus-simple-v0")
+    env = gym.make("blokus_gym:blokus-simple-minimax-v0")
     memory_size = 1000
-    num_episodes = 20
+    num_episodes = 1000
     batch_size = 32
     learning_rate = 0.001
-    model_filename = "blokus-greedy"
+    model_filename = "blokus-greedy3"
 
     dist_params = {"num_bins": 51, "v_min": -1.0, "v_max": 1.0}
     prioritized_params = {"a": 0.6, "b": 0.6, "eps": 1e-5}

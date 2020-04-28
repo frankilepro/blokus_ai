@@ -1,9 +1,9 @@
 # Source: https://github.com/qfettes/DeepRL-Tutorials/blob/master/utils/data_structures.py
-
+import sys
 import operator
 
 
-class SegmentTree(object):
+class SegmentTree:
     def __init__(self, capacity, operation, neutral_element):
         """Build a Segment Tree data structure.
         https://en.wikipedia.org/wiki/Segment_tree
@@ -37,14 +37,13 @@ class SegmentTree(object):
         mid = (node_start + node_end) // 2
         if end <= mid:
             return self._reduce_helper(start, end, 2 * node, node_start, mid)
-        else:
-            if mid + 1 <= start:
-                return self._reduce_helper(start, end, 2 * node + 1, mid + 1, node_end)
-            else:
-                return self._operation(
-                    self._reduce_helper(start, mid, 2 * node, node_start, mid),
-                    self._reduce_helper(mid + 1, end, 2 * node + 1, mid + 1, node_end)
-                )
+
+        if mid + 1 <= start:
+            return self._reduce_helper(start, end, 2 * node + 1, mid + 1, node_end)
+
+        return self._operation(
+            self._reduce_helper(start, mid, 2 * node, node_start, mid),
+            self._reduce_helper(mid + 1, end, 2 * node + 1, mid + 1, node_end))
 
     def reduce(self, start=0, end=None):
         """Returns result of applying `self.operation`
@@ -116,7 +115,7 @@ class SumSegmentTree(SegmentTree):
             assert 0 <= prefixsum <= self.sum() + 1e-5
         except AssertionError:
             print("Prefix sum error: {}".format(prefixsum))
-            exit()
+            sys.exit()
         idx = 1
         while idx < self._capacity:  # while non-leaf
             if self._value[2 * idx] > prefixsum:

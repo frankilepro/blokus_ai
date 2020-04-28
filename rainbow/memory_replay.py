@@ -6,7 +6,7 @@ from rainbow.segment_tree import MinSegmentTree, SumSegmentTree
 
 
 class ReplayMemory:
-    def __init__(self, max_size, batch_size, gamma=0.99, nsteps=None):
+    def __init__(self, max_size, batch_size, gamma=0.9, nsteps=None):
         self.max_size = max_size
         self.batch_size = batch_size
         self.memory = deque([], maxlen=max_size)
@@ -117,5 +117,5 @@ class PrioritizedExperienceReplay(ReplayMemory):
             weights.append((p * len(self)) ** (-self.b) / max_weight)
             batch.append(self.memory[i])
         states, actions, next_states, rewards, dones, possible_moves = self.create_batch(batch)
-        return states, actions, next_states, rewards, dones, \
-            possible_moves, indices, torch.tensor(weights)  # pylint: disable=not-callable
+        return states, actions, next_states, rewards, dones, possible_moves, indices, torch.tensor(
+            weights)  # pylint: disable-all
