@@ -1,6 +1,6 @@
 import os
 import pkg_resources
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from Cython.Build import build_ext, cythonize
 
 
@@ -35,7 +35,7 @@ else:
 
 setup(
     name='blokus-gym',
-    packages=['blokus_gym'],
+    packages=find_packages(),
     version=version,
     license='gpl-3.0',
     description='OpenAI gym environment for Blokus',
