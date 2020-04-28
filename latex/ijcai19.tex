@@ -77,6 +77,158 @@ $^1$École Polytechnique de Montréal\\
 
 \section{Discussion}
 
+Tables are considered illustrations containing data. Therefore, they should also appear floated to the top (preferably) or bottom of the page, and with the captions below them.
+
+\begin{table}
+\centering
+\begin{tabular}{lll}
+\hline
+Scenario  & $\delta$ & Runtime \\
+\hline
+Paris       & 0.1s  & 13.65ms     \\
+Paris       & 0.2s  & 0.01ms      \\
+New York    & 0.1s  & 92.50ms     \\
+Singapore   & 0.1s  & 33.33ms     \\
+Singapore   & 0.2s  & 23.01ms     \\
+\hline
+\end{tabular}
+\caption{Latex default table}
+\label{tab:plain}
+\end{table}
+
+\begin{table}
+\centering
+\begin{tabular}{lrr}  
+\toprule
+Scenario  & $\delta$ (s) & Runtime (ms) \\
+\midrule
+Paris       & 0.1  & 13.65      \\
+            & 0.2  & 0.01       \\
+New York    & 0.1  & 92.50      \\
+Singapore   & 0.1  & 33.33      \\
+            & 0.2  & 23.01      \\
+\bottomrule
+\end{tabular}
+\caption{Booktabs table}
+\label{tab:booktabs}
+\end{table}
+
+If you are using \LaTeX, you should use the {\tt booktabs} package, because it produces better tables than the standard ones. Compare Tables \ref{tab:plain} and~\ref{tab:booktabs}. The latter is clearly more readable for three reasons:
+
+\begin{enumerate}
+    \item The styling is better thanks to using the {\tt booktabs} rulers instead of the default ones.
+    \item Numeric columns are right-aligned, making it easier to compare the numbers. Make sure to also right-align the corresponding headers, and to use the same precision for all numbers.
+    \item We avoid unnecessary repetition, both between lines (no need to repeat the scenario name in this case) as well as in the content (units can be shown in the column header).
+\end{enumerate}
+
+\section{Conclusion}
+
+IJCAI's two-column format makes it difficult to typeset long formulas. A usual temptation is to reduce the size of the formula by using the {\tt small} or {\tt tiny} sizes. This doesn't work correctly with the current \LaTeX{} versions, breaking the line spacing of the preceding paragraphs and title, as well as the equation number sizes. The following equation demonstrates the effects (notice that this entire paragraph looks badly formatted):
+%
+\begin{tiny}
+\begin{equation}
+    x = \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i
+\end{equation}
+\end{tiny}%
+
+Reducing formula sizes this way is strictly forbidden. We {\bf strongly} recommend authors to split formulas in multiple lines when they don't fit in a single line. This is the easiest approach to typeset those formulas and provides the most readable output%
+%
+\begin{align}
+    x =& \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \nonumber\\
+    + & \prod_{i=1}^n \sum_{j=1}^n j_i
+\end{align}%
+
+If a line is just slightly longer than the column width, you may use the {\tt resizebox} environment on that equation. The result looks better and doesn't interfere with the paragraph's line spacing: %
+\begin{equation}
+\resizebox{.91\linewidth}{!}{$
+    \displaystyle
+    x = \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i
+$}
+\end{equation}%
+
+This last solution may have to be adapted if you use different equation environments, but it can generally be made to work. Please notice that in any case:
+
+\begin{itemize}
+    \item Equation numbers must be in the same font and size than the main text (10pt).
+    \item Your formula's main symbols should not be smaller than {\small small} text (9pt).
+\end{itemize}
+
+For instance, the formula
+%
+\begin{equation}
+    \resizebox{.91\linewidth}{!}{$
+    \displaystyle
+    x = \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j + \prod_{i=1}^n \sum_{j=1}^n j_i + \prod_{i=1}^n \sum_{j=1}^n i_j
+$}
+\end{equation}
+% 
+would not be acceptable because the text is too small.
+
+\section{Algorithms and Listings}
+
+Algorithms and listings are a special kind of figures. Like all illustrations, they should appear floated to the top (preferably) or bottom of the page. However, their caption should appear in the header, left-justified and enclosed between horizontal lines, as shown in Algorithm~\ref{alg:algorithm}. The algorithm body should be terminated with another horizontal line. It is up to the authors to decide whether to show line numbers or not, how to format comments, etc.
+
+In \LaTeX{} algorithms may be typeset using the {\tt algorithm} and {\tt algorithmic} packages, but you can also use one of the many other packages for the task.  
+
+\begin{algorithm}[tb]
+\caption{Example algorithm}
+\label{alg:algorithm}
+\textbf{Input}: Your algorithm's input\\
+\textbf{Parameter}: Optional list of parameters\\
+\textbf{Output}: Your algorithm's output
+\begin{algorithmic}[1] %[1] enables line numbers
+\STATE Let $t=0$.
+\WHILE{condition}
+\STATE Do some action.
+\IF {conditional}
+\STATE Perform task A.
+\ELSE
+\STATE Perform task B.
+\ENDIF
+\ENDWHILE
+\STATE \textbf{return} solution
+\end{algorithmic}
+\end{algorithm}
+
+\section*{Acknowledgments}
+
+The preparation of these instructions and the \LaTeX{} and Bib\TeX{}
+files that implement them was supported by Schlumberger Palo Alto
+Research, AT\&T Bell Laboratories, and Morgan Kaufmann Publishers.
+Preparation of the Microsoft Word file was supported by IJCAI.  An
+early version of this document was created by Shirley Jowell and Peter
+F. Patel-Schneider.  It was subsequently modified by Jennifer
+Ballentine and Thomas Dean, Bernhard Nebel, Daniel Pagenstecher,
+Kurt Steinkraus, Toby Walsh and Carles Sierra. The current version 
+has been prepared by Marc Pujol-Gonzalez and Francisco Cruz-Mencia.
+
+\appendix
+
+\section{\LaTeX{} and Word Style Files}\label{stylefiles}
+
+The \LaTeX{} and Word style files are available on the IJCAI--19
+website, \url{http://www.ijcai19.org}.
+These style files implement the formatting instructions in this
+document.
+
+The \LaTeX{} files are {\tt ijcai19.sty} and {\tt ijcai19.tex}, and
+the Bib\TeX{} files are {\tt named.bst} and {\tt ijcai19.bib}. The
+\LaTeX{} style file is for version 2e of \LaTeX{}, and the Bib\TeX{}
+style file is for version 0.99c of Bib\TeX{} ({\em not} version
+0.98i). The {\tt ijcai19.sty} style differs from the {\tt
+ijcai18.sty} file used for IJCAI--18.
+
+The Microsoft Word style file consists of a single file, {\tt
+ijcai19.doc}. This template differs from the one used for
+IJCAI--18.
+
+These Microsoft Word and \LaTeX{} files contain the source of the
+present document and may serve as a formatting sample.  
+
+Further information on using these styles for the preparation of
+papers for IJCAI--19 can be obtained by contacting {\tt
+pcchair@ijcai19.org}.
+
 \bibliographystyle{named}
 \bibliography{ijcai19}
 

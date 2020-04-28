@@ -1,193 +1,84 @@
-@ARTICLE{rainbow,
-       author = {{Hessel}, Matteo and {Modayil}, Joseph and {van Hasselt}, Hado and
-         {Schaul}, Tom and {Ostrovski}, Georg and {Dabney}, Will and
-         {Horgan}, Dan and {Piot}, Bilal and {Azar}, Mohammad and
-         {Silver}, David},
-        title = "{Rainbow: Combining Improvements in Deep Reinforcement Learning}",
-      journal = {arXiv e-prints},
-     keywords = {Computer Science - Artificial Intelligence, Computer Science - Machine Learning},
-         year = 2017,
-        month = oct,
-          eid = {arXiv:1710.02298},
-        pages = {arXiv:1710.02298},
-archivePrefix = {arXiv},
-       eprint = {1710.02298},
- primaryClass = {cs.AI},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2017arXiv171002298H},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+@inproceedings{rainbow,
+  title={Rainbow: Combining improvements in deep reinforcement learning},
+  author={Hessel, Matteo and Modayil, Joseph and Van Hasselt, Hado and Schaul, Tom and Ostrovski, Georg and Dabney, Will and Horgan, Dan and Piot, Bilal and Azar, Mohammad and Silver, David},
+  booktitle={Thirty-Second AAAI Conference on Artificial Intelligence},
+  year={2018}
 }
 
-@Article{alphaGo,
-author={Silver, David
-and Schrittwieser, Julian
-and Simonyan, Karen
-and Antonoglou, Ioannis
-and Huang, Aja
-and Guez, Arthur
-and Hubert, Thomas
-and Baker, Lucas
-and Lai, Matthew
-and Bolton, Adrian
-and Chen, Yutian
-and Lillicrap, Timothy
-and Hui, Fan
-and Sifre, Laurent
-and van den Driessche, George
-and Graepel, Thore
-and Hassabis, Demis},
-title={Mastering the game of Go without human knowledge},
-journal={Nature},
-year={2017},
-month={Oct},
-day={01},
-volume={550},
-number={7676},
-pages={354-359},
-abstract={A long-standing goal of artificial intelligence is an algorithm that learns, tabula rasa, superhuman proficiency in challenging domains. Recently, AlphaGo became the first program to defeat a world champion in the game of Go. The tree search in AlphaGo evaluated positions and selected moves using deep neural networks. These neural networks were trained by supervised learning from human expert moves, and by reinforcement learning from self-play. Here we introduce an algorithm based solely on reinforcement learning, without human data, guidance or domain knowledge beyond game rules. AlphaGo becomes its own teacher: a neural network is trained to predict AlphaGo's own move selections and also the winner of AlphaGo's games. This neural network improves the strength of the tree search, resulting in higher quality move selection and stronger self-play in the next iteration. Starting tabula rasa, our new program AlphaGo Zero achieved superhuman performance, winning 100--0 against the previously published, champion-defeating AlphaGo.},
-issn={1476-4687},
-doi={10.1038/nature24270},
-url={https://doi.org/10.1038/nature24270}
+@article{alphaGo,
+  title={Mastering the game of go without human knowledge},
+  author={Silver, David and Schrittwieser, Julian and Simonyan, Karen and Antonoglou, Ioannis and Huang, Aja and Guez, Arthur and Hubert, Thomas and Baker, Lucas and Lai, Matthew and Bolton, Adrian and others},
+  journal={Nature},
+  volume={550},
+  number={7676},
+  pages={354--359},
+  year={2017},
+  publisher={Nature Publishing Group}
 }
 
-@ARTICLE{alphaZero,
-       author = {{Silver}, David and {Hubert}, Thomas and {Schrittwieser}, Julian and
-         {Antonoglou}, Ioannis and {Lai}, Matthew and {Guez}, Arthur and
-         {Lanctot}, Marc and {Sifre}, Laurent and {Kumaran}, Dharshan and
-         {Graepel}, Thore and {Lillicrap}, Timothy and {Simonyan}, Karen and
-         {Hassabis}, Demis},
-        title = "{Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm}",
-      journal = {arXiv e-prints},
-     keywords = {Computer Science - Artificial Intelligence, Computer Science - Machine Learning},
-         year = 2017,
-        month = dec,
-          eid = {arXiv:1712.01815},
-        pages = {arXiv:1712.01815},
-archivePrefix = {arXiv},
-       eprint = {1712.01815},
- primaryClass = {cs.AI},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2017arXiv171201815S},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+@article{alphaZero,
+  title={Mastering chess and shogi by self-play with a general reinforcement learning algorithm},
+  author={Silver, David and Hubert, Thomas and Schrittwieser, Julian and Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and Lanctot, Marc and Sifre, Laurent and Kumaran, Dharshan and Graepel, Thore and others},
+  journal={arXiv preprint arXiv:1712.01815},
+  year={2017}
 }
 
-﻿@Article{dqn,
-author={Mnih, Volodymyr
-and Kavukcuoglu, Koray
-and Silver, David
-and Rusu, Andrei A.
-and Veness, Joel
-and Bellemare, Marc G.
-and Graves, Alex
-and Riedmiller, Martin
-and Fidjeland, Andreas K.
-and Ostrovski, Georg
-and Petersen, Stig
-and Beattie, Charles
-and Sadik, Amir
-and Antonoglou, Ioannis
-and King, Helen
-and Kumaran, Dharshan
-and Wierstra, Daan
-and Legg, Shane
-and Hassabis, Demis},
-title={Human-level control through deep reinforcement learning},
-journal={Nature},
-year={2015},
-month={Feb},
-day={01},
-volume={518},
-number={7540},
-pages={529-533},
-abstract={An artificial agent is developed that learns to play a diverse range of classic Atari 2600 computer games directly from sensory experience, achieving a performance comparable to that of an expert human player; this work paves the way to building general-purpose learning algorithms that bridge the divide between perception and action.},
-issn={1476-4687},
-doi={10.1038/nature14236},
-url={https://doi.org/10.1038/nature14236}
+@article{dqn,
+  title={Human-level control through deep reinforcement learning},
+  author={Mnih, Volodymyr and Kavukcuoglu, Koray and Silver, David and Rusu, Andrei A and Veness, Joel and Bellemare, Marc G and Graves, Alex and Riedmiller, Martin and Fidjeland, Andreas K and Ostrovski, Georg and others},
+  journal={Nature},
+  volume={518},
+  number={7540},
+  pages={529--533},
+  year={2015},
+  publisher={Nature Publishing Group}
 }
 
-@book{ abelson-et-al:scheme,
-  author = "Harold Abelson and Gerald~Jay Sussman and Julie Sussman",
-  title = "Structure and Interpretation of Computer Programs",
-  publisher = "MIT Press",
-  address = "Cambridge, Massachusetts",
-  year = "1985"
+@inproceedings{ddqn,
+  title={Deep reinforcement learning with double q-learning},
+  author={Van Hasselt, Hado and Guez, Arthur and Silver, David},
+  booktitle={Thirtieth AAAI conference on artificial intelligence},
+  year={2016}
 }
 
-@inproceedings{ bgf:Lixto,
-  author = "Robert Baumgartner and Georg Gottlob and Sergio Flesca",
-  title = "Visual Information Extraction with {Lixto}",
-  booktitle = "Proceedings of the 27th International Conference on Very Large Databases",
-  pages = "119--128",
-  publisher = "Morgan Kaufmann",
-  address = "Rome, Italy",
-  month = "September",
-  year = "2001"
+
+@article{dueling,
+  title={Dueling network architectures for deep reinforcement learning},
+  author={Wang, Ziyu and Schaul, Tom and Hessel, Matteo and Van Hasselt, Hado and Lanctot, Marc and De Freitas, Nando},
+  journal={arXiv preprint arXiv:1511.06581},
+  year={2015}
 }
 
-@article{ brachman-schmolze:kl-one,
-  author = "Ronald~J. Brachman and James~G. Schmolze",
-  title = "An overview of the {KL-ONE} knowledge representation system",
-  journal = "Cognitive Science",
-  volume = "9",
-  number = "2",
-  pages = "171--216",
-  month = "April--June",
-  year = "1985"
+@article{noisy,
+  title={Noisy networks for exploration},
+  author={Fortunato, Meire and Azar, Mohammad Gheshlaghi and Piot, Bilal and Menick, Jacob and Osband, Ian and Graves, Alex and Mnih, Vlad and Munos, Remi and Hassabis, Demis and Pietquin, Olivier and others},
+  journal={arXiv preprint arXiv:1706.10295},
+  year={2017}
 }
 
-@article{ gottlob:nonmon,
-  author = "Georg Gottlob",
-  title = "Complexity results for nonmonotonic logics",
-  journal = "Journal of Logic and Computation",
-  volume = "2",
-  number = "3",
-  pages = "397--425",
-  month = "June",
-  year = "1992"
+@inproceedings{distributional,
+  title={A distributional perspective on reinforcement learning},
+  author={Bellemare, Marc G and Dabney, Will and Munos, R{\'e}mi},
+  booktitle={Proceedings of the 34th International Conference on Machine Learning-Volume 70},
+  pages={449--458},
+  year={2017},
+  organization={JMLR. org}
 }
 
-@article{ gls:hypertrees,
-  author = "Georg Gottlob and Nicola Leone and Francesco Scarcello",
-  title = "Hypertree Decompositions and Tractable Queries",
-  journal = "Journal of Computer and System Sciences",
-  volume = "64",
-  number = "3",
-  pages = "579--627",
-  month = "May",
-  year = "2002"
+@article{nsteps,
+  title={Learning to predict by the methods of temporal differences},
+  author={Sutton, Richard S},
+  journal={Machine learning},
+  volume={3},
+  number={1},
+  pages={9--44},
+  year={1988},
+  publisher={Springer}
 }
 
-@article{ levesque:functional-foundations,
-  author = "Hector~J. Levesque",
-  title = "Foundations of a functional approach to knowledge representation",
-  journal = "Artificial Intelligence",
-  volume = "23",
-  number = "2",
-  pages = "155--212",
-  month = "July",
-  year = "1984"
-}
-
-@inproceedings{ levesque:belief,
-  author = "Hector~J. Levesque",
-  title = "A logic of implicit and explicit belief",
-  booktitle = "Proceedings of the Fourth National Conference on Artificial Intelligence",
-  publisher = "American Association for Artificial Intelligence",
-  pages = "198--202",
-  address = "Austin, Texas",
-  month = "August",
-  year = "1984"
-}
-
-@article{ nebel:jair-2000,
-  author = "Bernhard Nebel",
-  title = "On the compilability and expressive power of propositional planning formalisms",
-  journal = "Journal of Artificial Intelligence Research",
-  volume = "12",
-  pages = "271--315",
-  year = "2000"
-}
-
- @misc{proceedings,
-  author = {{IJCAI Proceedings}},
-  title = {{IJCAI} Camera Ready Submission},
-  howpublished = {\url{https://proceedings.ijcai.org/info}},
+@article{per,
+  title={Prioritized experience replay},
+  author={Schaul, Tom and Quan, John and Antonoglou, Ioannis and Silver, David},
+  journal={arXiv preprint arXiv:1511.05952},
+  year={2015}
 }
