@@ -4,7 +4,7 @@ from rainbow.agent import Agent
 if __name__ == "__main__":
     env = gym.make("blokus_gym:blokus-simple-minimax-v0")
     memory_size = 1000
-    num_episodes = 100
+    num_episodes = 1000
     batch_size = 32
     learning_rate = 0.001
     model_filename = "blokus-greedy3"

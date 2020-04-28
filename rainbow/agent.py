@@ -268,7 +268,7 @@ class Agent:
             while not done:
                 action = self.eps_greedy_action(state)
                 next_state, reward, done, _ = self.env.step(action)
-                self.env.render("human")
+                # self.env.render("human")
                 rewards += reward
                 state = self.process_state(next_state)
             if rewards == 1:
