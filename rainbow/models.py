@@ -10,6 +10,7 @@ class FilterLegalMoves(nn.Module):
     """
     Custom layer to consider only valid moves
     """
+
     def forward(self, x, possible_moves):
         legal_moves = possible_moves
         actions_tensor = torch.zeros(x.shape).to(x.device)
