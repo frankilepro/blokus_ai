@@ -1,6 +1,11 @@
 from gym.envs.registration import register
 
 register(
+    id='blokus-custom-v0',
+    entry_point='blokus_gym.envs:BlokusCustomEnv',
+)
+
+register(
     id='blokus-hard-v0',
     entry_point='blokus_gym.envs:BlokusEnv',
 )
