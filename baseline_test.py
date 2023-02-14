@@ -27,7 +27,7 @@ del model  # remove to demonstrate saving and loading
 
 model = A2C.load("blokus_weights")
 
-obs = env.reset()
+obs = envreset()
 while True:
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)

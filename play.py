@@ -9,7 +9,8 @@ if __name__ == "__main__":
     print(f"number of possible moves {env.action_space}")
     count = 0
     nb_rounds = 0
-    for _ in range(100):
+    env.reset()
+    for _ in range(10):
         while True:
             # input()
             action = env.action_space.sample()
@@ -17,7 +18,7 @@ if __name__ == "__main__":
             nb_rounds += 1
             # action = random.randint(0, 918)
             observation, reward, done, info = env.step(action)
-            env.render("human")
+            env.render()
             # print(env.ai.all_ids_to_move.keys())
             # print(reward)
 
