@@ -1,6 +1,6 @@
 import blokus_gym
 from blokus_gym.envs.blokus_env import BlokusEnv
-import gym
+import gymnasium as gym
 import random
 
 if __name__ == "__main__":

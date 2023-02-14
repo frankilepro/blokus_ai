@@ -7,7 +7,7 @@ import itertools
 from functools import partial
 import os
 import matplotlib.pyplot as plt
-import gym
+import gymnasium as gym
 import cython
 from blokus_gym.envs.game.blokus_game import InvalidMoveByAi
 from blokus_gym.envs.game.blokus_game import BlokusGame

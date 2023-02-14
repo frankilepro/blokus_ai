@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 
 from stable_baselines.common.env_checker import check_env
 from stable_baselines.common.policies import MlpPolicy
