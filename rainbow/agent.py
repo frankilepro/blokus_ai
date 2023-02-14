@@ -1,6 +1,6 @@
 import os
 
-import gym
+import gymnasium as gym
 import torch
 import torch.optim as optim
 import torch.nn.functional as F

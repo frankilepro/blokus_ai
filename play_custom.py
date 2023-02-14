@@ -5,12 +5,11 @@ import random
 
 if __name__ == "__main__":
     # env = BlokusEnv()
-    env = gym.make("blokus_gym:blokus-simple-v0")  # Make sure to do: pip install -e . in root
+    env = gym.make("blokus_gym:blokus-custom-v0")  # Make sure to do: pip install -e . in root
     print(f"number of possible moves {env.action_space}")
     count = 0
     nb_rounds = 0
-    env.reset()
-    for _ in range(10):
+    for _ in range(100):
         while True:
             # input()
             action = env.action_space.sample()
@@ -18,7 +17,7 @@ if __name__ == "__main__":
             nb_rounds += 1
             # action = random.randint(0, 918)
             observation, reward, done, info = env.step(action)
-            env.render()
+            env.render("human")
             # print(env.ai.all_ids_to_move.keys())
             # print(reward)
 

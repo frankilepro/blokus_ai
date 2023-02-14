@@ -7,8 +7,10 @@ import itertools
 from functools import partial
 import os
 import matplotlib.pyplot as plt
-import gym
+import gymnasium as gym
 import cython
+import torch.random
+
 from blokus_gym.envs.game.blokus_game import InvalidMoveByAi
 from blokus_gym.envs.game.blokus_game import BlokusGame
 from blokus_gym.envs.game.board import Board
@@ -25,7 +27,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 
 class BlokusEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render_modes': ['human'], 'render_fps' : 2}
     rewards = {'won': 1, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -1}
     STATES_FOLDER = "states"
 
@@ -118,7 +120,11 @@ class BlokusEnv(gym.Env):
 
         return done, reward
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            np.random.seed(seed)
+            torch.random.seed(seed)
+            random.seed(seed)
         self.init_game()
         return self.blokus_game.board.tensor
 

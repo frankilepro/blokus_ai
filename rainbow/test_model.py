@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 from rainbow.agent import Agent
 
 if __name__ == "__main__":

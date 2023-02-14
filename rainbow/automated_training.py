@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import pandas as pd
 
 from rainbow.agent import Agent
