@@ -7,8 +7,12 @@ import itertools
 from functools import partial
 import os
 import matplotlib.pyplot as plt
-import gym
+import gymnasium as gym
+import numpy as np
+import pygame
 import cython
+import torch.random
+
 from blokus_gym.envs.game.blokus_game import InvalidMoveByAi
 from blokus_gym.envs.game.blokus_game import BlokusGame
 from blokus_gym.envs.game.board import Board
@@ -25,7 +29,7 @@ def possible_moves_func(dummy, board_size, pieces):
 
 
 class BlokusEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render_modes': ['human', 'pyplot', 'minimal', 'tensor'], 'render_fps' : 1}
     rewards = {'won': 1, 'tie-won': 0, 'default': 0, 'invalid': -100, 'lost': -1}
     STATES_FOLDER = "states"
 
@@ -36,7 +40,8 @@ class BlokusEnv(gym.Env):
     all_shapes = get_all_shapes()
     bot_type = RandomPlayer
 
-    def __init__(self):
+
+    def __init__(self, render_mode="human"):
         assert 2 <= self.NUMBER_OF_PLAYERS <= 4, "Between 2 and 3 players"
         print(f"Is running cython version: {cython.compiled}")
         if not cython.compiled:
@@ -45,10 +50,20 @@ class BlokusEnv(gym.Env):
         self.starter_won = 0
         self.last_won = 0
         self.games_played = 0
+        self.render_mode = render_mode
+
+        if self.render_mode == "human":
+            pygame.init()
+            self.WINDOW_WIDTH = self.BOARD_SIZE * 100
+            self.WINDOW_HEIGHT = self.BOARD_SIZE * 100
+            self.window = pygame.display.set_mode((self.WINDOW_HEIGHT, self.WINDOW_HEIGHT))
+        else:
+            self.window = None
+
         self.init_game()
 
     def init_game(self):
-        standard_size = Board(self.BOARD_SIZE)
+        standard_size = Board(self.BOARD_SIZE, self.window)
         self.blokus_game = BlokusGame(standard_size, self.all_shapes)
 
         self.observation_space = gym.spaces.Box(0, self.NUMBER_OF_PLAYERS,
@@ -118,12 +133,16 @@ class BlokusEnv(gym.Env):
 
         return done, reward
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            np.random.seed(seed)
+            torch.random.seed(seed)
+            random.seed(seed)
         self.init_game()
         return self.blokus_game.board.tensor
 
-    def render(self, mode='human'):
-        self.blokus_game.board.print_board(mode=mode)
+    def render(self):
+        self.blokus_game.board.print_board(render_mode=self.render_mode)
 
     def close(self):
         plt.close('all')

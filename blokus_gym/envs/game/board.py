@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import pygame
+from pygame.locals import *
 
 
 class Board:
@@ -11,10 +13,16 @@ class Board:
     character length one.
     """
 
-    def __init__(self, size):
+    def __init__(self, size, window=None):
         plt.ion()
         self.size = size
         self.tensor = torch.zeros((size, size), dtype=torch.int32)
+
+        if window is not None:
+            self.window = window
+            self.colors = {0: (211, 211, 211), 1: (255, 0, 0), 2: (0, 0, 255), 3: (255, 255, 0), 4: (0, 255, 0)}
+            self.clock = pygame.time.Clock()
+            self.WINDOW_WIDTH, self.WINDOW_HEIGHT = self.window.get_size()
 
     def update(self, player, move):
         """
@@ -63,13 +71,16 @@ class Board:
                    self.is_player_tile(player, (x - 1, y)) or self.is_player_tile(player, (x + 1, y))
                    for x, y in move.points)
 
-    def print_board(self, mode="human"):
-        if mode == "human":
-            self.fancy_board()
-        elif mode == "minimal":
+    def print_board(self, render_mode="human"):
+        if render_mode == "human":
+            self.pygame_board()
+        elif render_mode == "pyplot":
+            self.pyplot_board()
+        elif render_mode == "minimal":
             self.print_board_min()
-        elif mode == "tensor":
+        elif render_mode == "tensor":
             self.print_tensor()
+
 
     def print_tensor(self):
         print(chr(27) + "[2J")
@@ -81,7 +92,7 @@ class Board:
         coverage = all_non_zeros.sum().item() / (all_non_zeros.shape[0] * all_non_zeros.shape[1]) * 100
         print(f"Coverage: {coverage:.2f}%")
 
-    def fancy_board(self):
+    def pyplot_board(self):
         plt.clf()
 
         colors = {0: "lightgrey", 1: "red", 2: "blue", 3: "yellow", 4: "green"}
@@ -97,3 +108,16 @@ class Board:
         plt.grid()
         plt.draw()
         plt.pause(0.00001)
+
+    def pygame_board(self):
+        self.clock.tick(1)
+
+        # Only render if there is something to render
+        blockSize = int(self.WINDOW_WIDTH / self.size) # Set the size of the grid block
+        for x, x_screen in enumerate(range(0, self.WINDOW_WIDTH, blockSize)):
+            for y, y_screen in enumerate(range(0, self.WINDOW_HEIGHT, blockSize)):
+                rect = pygame.Rect(x_screen, y_screen, blockSize, blockSize)
+                pygame.draw.rect(self.window, self.colors[self.tensor[y][x].item()], rect, 0) # Fill
+                pygame.draw.rect(self.window, (150, 150, 150), rect, 1) # Border
+
+        pygame.display.update()
